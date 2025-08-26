@@ -1,0 +1,43 @@
+{
+  "name": "aus-map-travel-journal",
+  "version": "1.0.0",
+  "description": "A React + TypeScript + TailwindCSS app for mapping visited places in Australia with pins, photos, and videos, powered by Bun.",
+  "scripts": {
+    "dev": "bun run tailwind:watch & bun run start",
+    "start": "bunx react-scripts start",
+    "build": "bun run tailwind:build && bunx react-scripts build",
+    "tailwind:build": "bunx tailwindcss -i ./src/index.css -o ./src/tailwind.output.css --minify",
+    "tailwind:watch": "bunx tailwindcss -i ./src/index.css -o ./src/tailwind.output.css --watch"
+  },
+  "dependencies": {
+    "@types/leaflet": "^1.9.20",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@types/react-leaflet": "^3.0.0",
+    "leaflet": "^1.9.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-leaflet": "^4.2.1"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.1",
+    "postcss": "^8.4.31",
+    "autoprefixer": "^10.4.16",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "bun": ">=1.0.0"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}

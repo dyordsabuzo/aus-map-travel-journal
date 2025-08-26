@@ -1,0 +1,18 @@
+[install]
+# Where Bun will install dependencies
+cache = "node_modules/.bun"
+
+[define]
+# You can define environment variables here
+
+[dev]
+# The entrypoint for development
+entrypoint = "src/index.tsx"
+
+[build]
+# Output directory for builds
+outdir = "dist"
+
+[run]
+# Default script to run
+main = "src/index.tsx"
