@@ -1,21 +1,7 @@
 {
+  "extends": "astro/tsconfigs/base",
   "compilerOptions": {
-    "target": "ES2020",
-    "lib": ["DOM", "DOM.Iterable", "ES2020"],
-    "module": "ESNext",
-    "moduleResolution": "Node",
     "jsx": "react-jsx",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "allowSyntheticDefaultImports": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "baseUrl": "./src",
-    "types": ["leaflet"]
-  },
-  "include": ["src"],
-  "exclude": ["node_modules", "dist"]
+    "jsxImportSource": "react"
+  }
 }

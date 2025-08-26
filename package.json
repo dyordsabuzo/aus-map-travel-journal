@@ -3,41 +3,32 @@
   "version": "1.0.0",
   "description": "A React + TypeScript + TailwindCSS app for mapping visited places in Australia with pins, photos, and videos, powered by Bun.",
   "scripts": {
-    "dev": "bun run tailwind:watch & bun run start",
-    "start": "bunx react-scripts start",
-    "build": "bun run tailwind:build && bunx react-scripts build",
-    "tailwind:build": "bunx tailwindcss -i ./src/index.css -o ./src/tailwind.output.css --minify",
-    "tailwind:watch": "bunx tailwindcss -i ./src/index.css -o ./src/tailwind.output.css --watch"
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro check && astro build",
+    "preview": "astro preview",
+    "astro": "astro"
   },
   "dependencies": {
+    "@astrojs/check": "^0.9.4",
+    "@astrojs/mdx": "^4.3.4",
+    "@astrojs/react": "^4.3.0",
+    "@astrojs/sitemap": "^3.5.1",
+    "@astrojs/tailwind": "^6.0.2",
     "@types/leaflet": "^1.9.20",
-    "@types/react": "^18.2.0",
-    "@types/react-dom": "^18.2.0",
+    "@types/react": "^19.1.11",
+    "@types/react-dom": "^19.1.8",
     "@types/react-leaflet": "^3.0.0",
+    "astro": "^5.13.3",
+    "astro-icon": "^1.1.5",
     "leaflet": "^1.9.4",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
     "react-leaflet": "^4.2.1"
   },
   "devDependencies": {
-    "tailwindcss": "^3.4.1",
-    "postcss": "^8.4.31",
-    "autoprefixer": "^10.4.16",
-    "typescript": "^5.3.3"
-  },
-  "engines": {
-    "bun": ">=1.0.0"
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+    "tailwindcss": "^4.1.12",
+    "typescript": "^5.3.3",
+    "@tailwindcss/typography": "^0.5.16"
   }
 }
