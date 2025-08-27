@@ -3,13 +3,12 @@
   "version": "1.0.0",
   "description": "A React + TypeScript + TailwindCSS app for mapping visited places in Australia with pins, photos, and videos, powered by Bun.",
   "scripts": {
-    "dev": "bun run tailwind:watch & bun run start",
-    "start": "bunx react-scripts start",
-    "build": "bun run tailwind:build && bunx react-scripts build",
-    "tailwind:build": "bunx tailwindcss -i ./src/index.css -o ./src/tailwind.output.css --minify",
-    "tailwind:watch": "bunx tailwindcss -i ./src/index.css -o ./src/tailwind.output.css --watch"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
+    "@tailwindcss/typography": "^0.5.16",
     "@types/leaflet": "^1.9.20",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
@@ -21,6 +20,8 @@
     "react-leaflet": "^4.2.1",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.8.2",
+    "rehype-highlight": "^7.0.2",
+    "remark-gfm": "^4.0.1",
     "vite": "^7.1.3"
   },
   "devDependencies": {

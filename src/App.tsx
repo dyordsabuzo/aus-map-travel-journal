@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import MapView from "./components/MapView";
 import { Pin } from "./types";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
-// import { BlogRoutes } from "./components/BlogList";
+import { BlogRoutes } from "./components/blog/BlogRoutes";
 
 const initialPins: Pin[] = [];
 
@@ -91,7 +91,7 @@ function App() {
                 />
               }
             />
-            {/*<Route path="/blogs/*" element={<BlogRoutes />} />*/}
+            <Route path="/blogs/*" element={<BlogRoutes />} />
           </Routes>
         </div>
       </div>
