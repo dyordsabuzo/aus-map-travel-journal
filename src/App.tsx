@@ -138,7 +138,7 @@ function App() {
           <div className="flex-1">
             <Routes>
               <Route
-                path="/"
+                path="/aus-map-travel-journal"
                 element={
                   <MapView
                     pins={pins}
@@ -151,7 +151,10 @@ function App() {
                   />
                 }
               />
-              <Route path="/blogs/*" element={<BlogRoutes />} />
+              <Route
+                path="/aus-map-travel-journal/blogs/*"
+                element={<BlogRoutes />}
+              />
             </Routes>
           </div>
         </div>
