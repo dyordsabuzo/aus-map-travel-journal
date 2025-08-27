@@ -17,6 +17,8 @@ function App() {
   const [endIdx, setEndIdx] = useState<number | null>(null);
   const [isGeocoding, setIsGeocoding] = useState<boolean>(false);
 
+  const baseRoute = import.meta.env.VITE_BASE || "";
+
   // Handle map click to add a new pin
   const handleMapClick = (e: any) => {
     if (!e.latlng) return;
@@ -138,7 +140,7 @@ function App() {
           <div className="flex-1">
             <Routes>
               <Route
-                path="/aus-map-travel-journal"
+                path={`${baseRoute}/`}
                 element={
                   <MapView
                     pins={pins}
@@ -151,10 +153,7 @@ function App() {
                   />
                 }
               />
-              <Route
-                path="/aus-map-travel-journal/blogs/*"
-                element={<BlogRoutes />}
-              />
+              <Route path={`${baseRoute}/blogs/*`} element={<BlogRoutes />} />
             </Routes>
           </div>
         </div>
