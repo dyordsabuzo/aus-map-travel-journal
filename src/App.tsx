@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import MapView from "./components/MapView";
 import { Pin } from "./types";
+import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+// import { BlogRoutes } from "./components/BlogList";
 
 const initialPins: Pin[] = [];
 
@@ -27,8 +29,8 @@ function App() {
     }));
     setPins((prev) =>
       prev.map((pin, idx) =>
-        idx === pinIdx ? { ...pin, media: [...pin.media, ...fileObjs] } : pin,
-      ),
+        idx === pinIdx ? { ...pin, media: [...pin.media, ...fileObjs] } : pin
+      )
     );
   };
 
@@ -56,24 +58,44 @@ function App() {
                   ? pin.travels
                   : [...pin.travels, idx],
               }
-            : pin,
-        ),
+            : pin
+        )
       );
     }
   };
 
   return (
-    <div className="h-screen w-screen bg-gray-100">
-      <MapView
-        pins={pins}
-        onMapClick={handleMapClick}
-        onMediaUpload={handleMediaUpload}
-        startIdx={startIdx}
-        endIdx={endIdx}
-        onSetStart={handleSetStart}
-        onSetEnd={handleSetEnd}
-      />
-    </div>
+    <Router>
+      <div className="h-screen w-screen bg-gray-100 flex flex-col">
+        <nav className="bg-white shadow px-4 py-2 flex items-center">
+          <Link to="/" className="text-xl font-bold text-blue-700 mr-6">
+            Aussie Map Travel Journal
+          </Link>
+          <Link to="/blogs" className="text-blue-600 hover:underline">
+            Blogs
+          </Link>
+        </nav>
+        <div className="flex-1">
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <MapView
+                  pins={pins}
+                  onMapClick={handleMapClick}
+                  onMediaUpload={handleMediaUpload}
+                  startIdx={startIdx}
+                  endIdx={endIdx}
+                  onSetStart={handleSetStart}
+                  onSetEnd={handleSetEnd}
+                />
+              }
+            />
+            {/*<Route path="/blogs/*" element={<BlogRoutes />} />*/}
+          </Routes>
+        </div>
+      </div>
+    </Router>
   );
 }
 

@@ -73,7 +73,7 @@ const MapView: React.FC<MapViewProps> = ({
     center={AUSTRALIA_CENTER}
     zoom={4}
     minZoom={4}
-    maxZoom={19}
+    maxZoom={15}
     className="h-screen w-screen"
     maxBounds={AUSTRALIA_BOUNDS}
     maxBoundsViscosity={1.0}
@@ -92,14 +92,20 @@ const MapView: React.FC<MapViewProps> = ({
           />
           <div className="flex flex-col gap-2 mt-2">
             <button
-              className={`px-2 py-1 rounded text-white ${startIdx === idx ? "bg-green-600" : "bg-green-400 hover:bg-green-600"}`}
+              className={`px-2 py-1 rounded text-white ${
+                startIdx === idx
+                  ? "bg-green-600"
+                  : "bg-green-400 hover:bg-green-600"
+              }`}
               onClick={() => onSetStart(idx)}
               disabled={startIdx === idx}
             >
               {startIdx === idx ? "Start Point" : "Set as Start"}
             </button>
             <button
-              className={`px-2 py-1 rounded text-white ${endIdx === idx ? "bg-blue-600" : "bg-blue-400 hover:bg-blue-600"}`}
+              className={`px-2 py-1 rounded text-white ${
+                endIdx === idx ? "bg-blue-600" : "bg-blue-400 hover:bg-blue-600"
+              }`}
               onClick={() => onSetEnd(idx)}
               disabled={endIdx === idx}
             >
@@ -126,7 +132,7 @@ const MapView: React.FC<MapViewProps> = ({
             }}
           />
         );
-      }),
+      })
     )}
   </MapContainer>
 );

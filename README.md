@@ -19,6 +19,7 @@ A web application for mapping and journaling places visited in Australia. Users 
   - [Setup](#setup)
   - [Scripts](#scripts)
   - [Adding Features](#adding-features)
+- [Blogs](#blogs)
 - [Best Practices](#best-practices)
 - [Troubleshooting](#troubleshooting)
 - [License](#license)
@@ -35,6 +36,20 @@ This application allows users to:
 - View media in a popup by clicking on a pin.
 
 The project is built with **React**, **TypeScript**, **TailwindCSS**, and **Bun** for fast development and modern best practices.
+
+---
+
+## Blogs
+
+The project includes a section for blogs, allowing you to add, organize, and display travel stories or articles related to your journeys.
+
+- **Directory:** `src/blogs/`
+- **Usage:** Place your Markdown or text files for each blog post in this directory. You can extend the application to read and render these files as blog entries within the UI.
+- **Example:**  
+  - `src/blogs/my-first-trip.md`
+  - `src/blogs/sydney-adventures.md`
+
+You may implement a blog listing or viewer component to display these posts in the app.
 
 ---
 
