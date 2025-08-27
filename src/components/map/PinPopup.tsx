@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-import { Pin } from "../types";
+import { Pin } from "@types/PinTypes";
 
 interface PinPopupProps {
   pin: Pin;
@@ -35,7 +35,7 @@ const PinPopup: React.FC<PinPopupProps> = ({ pin, onMediaUpload }) => {
                 controls
                 className="w-20 h-20 rounded bg-black"
               />
-            ),
+            )
           )
         ) : (
           <span className="text-gray-400">No media yet.</span>

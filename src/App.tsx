@@ -1,8 +1,11 @@
 import React, { useState } from "react";
-import MapView from "./components/MapView";
-import { Pin } from "./types";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
-import { BlogRoutes } from "./components/blog/BlogRoutes";
+import { BlogRoutes } from "@components/blog/BlogRoutes";
+import AddressInput from "@components/AddressInput";
+import { geocodeAddress } from "@utils/geocode";
+import { Pin } from "@types/PinTypes";
+import MapView from "@components/map/MapView";
+import { logger } from "@utils/logger";
 
 const initialPins: Pin[] = [];
 
@@ -10,6 +13,7 @@ function App() {
   const [pins, setPins] = useState<Pin[]>(initialPins);
   const [startIdx, setStartIdx] = useState<number | null>(null);
   const [endIdx, setEndIdx] = useState<number | null>(null);
+  const [isGeocoding, setIsGeocoding] = useState<boolean>(false);
 
   // Handle map click to add a new pin
   const handleMapClick = (e: any) => {
@@ -18,6 +22,7 @@ function App() {
     const placeName = prompt("Enter the name of this place:");
     if (!placeName) return;
     setPins((prev) => [...prev, { coords, placeName, media: [], travels: [] }]);
+    logger.info("Pin added by map click:", { coords, placeName });
   };
 
   // Handle media upload for a pin
@@ -32,6 +37,10 @@ function App() {
         idx === pinIdx ? { ...pin, media: [...pin.media, ...fileObjs] } : pin
       )
     );
+    logger.info("Media uploaded for pin:", {
+      pinIdx,
+      files: fileObjs.map((f) => f.name),
+    });
   };
 
   // Set a pin as start point
@@ -64,6 +73,38 @@ function App() {
     }
   };
 
+  // Geocode address and add pin (modular)
+  const handleAddressSubmit = async (address: string) => {
+    setIsGeocoding(true);
+    try {
+      logger.info("Geocoding address submitted:", address);
+      const result = await geocodeAddress(address);
+      if (result) {
+        setPins((prev) => [
+          ...prev,
+          {
+            coords: [result.lat, result.lon],
+            placeName: result.displayName,
+            media: [],
+            travels: [],
+          },
+        ]);
+        logger.success("Pin added by address:", {
+          address,
+          coords: [result.lat, result.lon],
+        });
+      } else {
+        logger.warn("Address not found for geocoding:", address);
+        alert("Address not found. Please try a different address.");
+      }
+    } catch (err) {
+      logger.error("Error occurred while geocoding address:", err);
+      alert("Error occurred while geocoding address.");
+    } finally {
+      setIsGeocoding(false);
+    }
+  };
+
   return (
     <Router>
       <div className="h-screen w-screen bg-gray-100 flex flex-col">
@@ -75,24 +116,33 @@ function App() {
             Blogs
           </Link>
         </nav>
-        <div className="flex-1">
-          <Routes>
-            <Route
-              path="/"
-              element={
-                <MapView
-                  pins={pins}
-                  onMapClick={handleMapClick}
-                  onMediaUpload={handleMediaUpload}
-                  startIdx={startIdx}
-                  endIdx={endIdx}
-                  onSetStart={handleSetStart}
-                  onSetEnd={handleSetEnd}
-                />
-              }
-            />
-            <Route path="/blogs/*" element={<BlogRoutes />} />
-          </Routes>
+        <div className="flex-1 flex flex-col">
+          {/* Address input for geocoding */}
+          <AddressInput
+            onSubmit={handleAddressSubmit}
+            loading={isGeocoding}
+            placeholder="Enter an address (e.g. Sydney Opera House, NSW)"
+            buttonLabel="Add Pin by Address"
+          />
+          <div className="flex-1">
+            <Routes>
+              <Route
+                path="/"
+                element={
+                  <MapView
+                    pins={pins}
+                    onMapClick={handleMapClick}
+                    onMediaUpload={handleMediaUpload}
+                    startIdx={startIdx}
+                    endIdx={endIdx}
+                    onSetStart={handleSetStart}
+                    onSetEnd={handleSetEnd}
+                  />
+                }
+              />
+              <Route path="/blogs/*" element={<BlogRoutes />} />
+            </Routes>
+          </div>
         </div>
       </div>
     </Router>

@@ -1,18 +1,23 @@
-import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { blogFiles, BlogMeta, extractMeta } from "./BlogRoutes";
+import { useEffect, useState } from "react";
+import { BlogMeta } from "@types/BlogType";
+import { blogFiles, extractMeta } from "@utils/blogextract";
+import { Logger } from "@utils/logger";
 
 export const BlogList: React.FC = () => {
-  const [blogs, setBlogs] = useState<BlogMeta[]>([]);
   const navigate = useNavigate();
+
+  const [blogs, setBlogs] = useState<BlogMeta[]>([]);
 
   useEffect(() => {
     // Load all blog files and extract metadata
     const loadBlogs = async () => {
       const entries = Object.entries(blogFiles);
+
+      Logger.debug("Loading blogs...", { blogFiles, entries });
       const loaded: BlogMeta[] = [];
       for (const [filePath, loader] of entries) {
-        const { default: content } = await (loader as () => Promise<string>)();
+        const content = await (loader as () => Promise<string>)();
         loaded.push(extractMeta(content, filePath));
       }
       // Sort by date descending if available

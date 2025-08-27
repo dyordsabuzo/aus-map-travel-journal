@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
-import { blogFiles, BlogPost, extractMeta } from "./BlogRoutes";
 import { Link, useLocation } from "react-router-dom";
+import { blogFiles, extractMeta } from "@utils/blogextract";
+import { BlogPost } from "@types/BlogType";
 
 export const BlogViewer: React.FC = () => {
   const [post, setPost] = useState<BlogPost | null>(null);
@@ -22,9 +23,7 @@ export const BlogViewer: React.FC = () => {
       return;
     }
     const load = async () => {
-      const { default: content } = await (
-        blogFiles[filePath] as () => Promise<string>
-      )();
+      const content = await (blogFiles[filePath] as () => Promise<string>)();
       const meta = extractMeta(content, filePath);
       setPost({ ...meta, content });
     };

@@ -10,7 +10,7 @@ import {
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import PinPopup from "./PinPopup";
-import { Pin } from "../types";
+import { Pin } from "@types/PinTypes";
 
 // Define selected icon outside the component to avoid recreation
 const selectedIcon = L.icon({
