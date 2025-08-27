@@ -6,10 +6,12 @@ import { geocodeAddress } from "@utils/geocode";
 import { Pin } from "@types/PinTypes";
 import MapView from "@components/map/MapView";
 import { logger } from "@utils/logger";
+import { useAlert } from "@components/common/AlertContext";
 
 const initialPins: Pin[] = [];
 
 function App() {
+  const { showAlert } = useAlert(); // Initialize the alert hook
   const [pins, setPins] = useState<Pin[]>(initialPins);
   const [startIdx, setStartIdx] = useState<number | null>(null);
   const [endIdx, setEndIdx] = useState<number | null>(null);
@@ -75,6 +77,7 @@ function App() {
 
   // Geocode address and add pin (modular)
   const handleAddressSubmit = async (address: string) => {
+    // const { showAlert } = useAlert();
     setIsGeocoding(true);
     try {
       logger.info("Geocoding address submitted:", address);
@@ -95,11 +98,19 @@ function App() {
         });
       } else {
         logger.warn("Address not found for geocoding:", address);
-        alert("Address not found. Please try a different address.");
+        showAlert({
+          message: "Address not found. Please try a different address.",
+          type: "warning",
+          duration: 5000, // Example: automatically dismiss after 5 seconds
+        });
       }
     } catch (err) {
       logger.error("Error occurred while geocoding address:", err);
-      alert("Error occurred while geocoding address.");
+      showAlert({
+        message: "Error occurred while geocoding address.",
+        type: "error",
+        title: "Geocoding Error", // Example: custom title
+      });
     } finally {
       setIsGeocoding(false);
     }
