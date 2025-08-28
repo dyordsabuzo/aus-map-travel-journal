@@ -55,18 +55,18 @@ function App() {
           <Link to="/" className="text-xl font-bold text-blue-700 mr-6">
             Aussie Map Travel Journal
           </Link>
-          <Link to="/blogs" className="text-blue-600 hover:underline">
+          {/*<Link to="/blogs" className="text-blue-600 hover:underline">
             Blogs
-          </Link>
+          </Link>*/}
         </nav>
         <div className="flex-1 flex flex-col">
           {/* Address input for geocoding */}
-          <AddressInput
+          {/*<AddressInput
             onSubmit={handleAddressSubmit}
             loading={isGeocoding}
             placeholder="Enter an address (e.g. Sydney Opera House, NSW)"
             buttonLabel="Add Pin by Address"
-          />
+          />*/}
           <div className="flex-1">
             <Routes>
               <Route path={`${baseRoute}/`} element={<MapView />} />

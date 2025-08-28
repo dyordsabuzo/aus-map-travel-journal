@@ -52,7 +52,7 @@ const BlogPinPopup: React.FC<{ pin: BlogMapPin }> = ({ pin }) => (
         </div>
       )}
     </a>
-    <div className="flex-1 min-w-0">
+    <div className="flex-1 min-w-52">
       <h4 className="font-bold text-lg mb-1">{pin.title}</h4>
       {pin.date && (
         <div className="text-xs text-gray-500 mb-1">

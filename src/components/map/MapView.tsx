@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useCallback } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -10,8 +10,11 @@ import {
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import BlogPinPopup from "./BlogPinPopup";
+import AddPinButton from "./AddPinButton";
+import AddPinInput from "./AddPinInput";
 import { BlogMapPin } from "../../types/BlogType";
-import { getBlogMapPins } from "@utils/blogProcessor";
+import { useBlogPins } from "./hooks/useBlogPins";
+import { geocodeAddress } from "./utils/geocodeAddress";
 
 // Define selected icon outside the component to avoid recreation
 const selectedIcon = L.icon({
@@ -53,44 +56,105 @@ function MapClickHandler({ onMapClick }: { onMapClick?: (e: any) => void }) {
   return null;
 }
 
-const MapView: React.FC = () => {
-  const [pins, setPins] = React.useState<BlogMapPin[]>([]);
-  const [loading, setLoading] = React.useState(true);
+const MapView: React.FC<{
+  initialCenter?: [number, number];
+  initialZoom?: number;
+  bounds?: [[number, number], [number, number]];
+}> = ({
+  initialCenter = [-25.2744, 133.7751],
+  initialZoom = 4,
+  bounds = [
+    [-44, 112], // Southwest
+    [-10, 154], // Northeast
+  ],
+}) => {
+  const { pins, addPin, loading } = useBlogPins();
+  const [showAddPinInput, setShowAddPinInput] = useState(false);
+  const [addressInput, setAddressInput] = useState("");
 
-  React.useEffect(() => {
-    const fetchPins = async () => {
-      setLoading(true);
-      const blogPins = await getBlogMapPins();
-      setPins(blogPins);
-      setLoading(false);
-    };
-    fetchPins();
+  // Show/hide input field
+  const handleAddPinClick = useCallback(() => {
+    setShowAddPinInput((prev) => !prev);
   }, []);
 
+  // Input change handler
+  const handleAddressChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setAddressInput(e.target.value);
+    },
+    [],
+  );
+
+  // Hide input field
+  const handleInputClose = useCallback(() => {
+    setShowAddPinInput(false);
+    setAddressInput("");
+  }, []);
+
+  // Submit handler: geocode and add pin
+  const handleAddressSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!addressInput.trim()) return;
+
+      const geo = await geocodeAddress(addressInput);
+      if (geo) {
+        const newPin: BlogMapPin = {
+          id: `user-${Date.now()}`,
+          lat: geo.lat,
+          lng: geo.lng,
+          title: geo.displayName,
+          blogUrl: "#",
+          featuredPhoto: "",
+          date: new Date().toISOString(),
+          description: "",
+          tags: [],
+          category: "",
+          featured: false,
+        };
+        addPin(newPin);
+        handleInputClose();
+      } else {
+        alert("Address not found. Please try a different address.");
+      }
+    },
+    [addressInput, addPin, handleInputClose],
+  );
+
   return (
-    <MapContainer
-      center={AUSTRALIA_CENTER}
-      zoom={4}
-      minZoom={4}
-      maxZoom={19}
-      className="h-screen w-screen"
-      maxBounds={AUSTRALIA_BOUNDS}
-      maxBoundsViscosity={1.0}
-    >
-      <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    <div className="relative h-screen w-screen">
+      <AddPinButton onClick={handleAddPinClick} />
+      <AddPinInput
+        visible={showAddPinInput}
+        address={addressInput}
+        onAddressChange={handleAddressChange}
+        onSubmit={handleAddressSubmit}
+        onClose={handleInputClose}
       />
-      <MapClickHandler />
-      {!loading &&
-        pins.map((pin, idx) => (
-          <Marker key={pin.id} position={[pin.lat, pin.lng]}>
-            <Popup>
-              <BlogPinPopup pin={pin} />
-            </Popup>
-          </Marker>
-        ))}
-    </MapContainer>
+      <MapContainer
+        center={initialCenter}
+        zoom={initialZoom}
+        minZoom={initialZoom}
+        maxZoom={15}
+        className="h-screen w-screen"
+        maxBounds={bounds}
+        maxBoundsViscosity={1.0}
+      >
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        />
+        <MapClickHandler />
+        {!loading &&
+          pins.map((pin) => (
+            <Marker key={pin.id} position={[pin.lat, pin.lng]}>
+              <Popup>
+                <BlogPinPopup pin={pin} />
+              </Popup>
+            </Marker>
+          ))}
+      </MapContainer>
+    </div>
   );
 };
 

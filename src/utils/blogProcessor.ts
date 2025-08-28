@@ -120,7 +120,7 @@ export class FrontmatterParser {
    * Normalize and validate frontmatter data
    */
   private static normalizeFrontmatter(
-    data: Record<string, any>
+    data: Record<string, any>,
   ): FrontmatterData {
     const normalized: FrontmatterData = { ...DEFAULT_FRONTMATTER };
 
@@ -193,7 +193,7 @@ export class FrontmatterParser {
    */
   static validate(
     frontmatter: FrontmatterData,
-    requiredFields: string[] = []
+    requiredFields: string[] = [],
   ): boolean {
     return requiredFields.every((field) => {
       const value = frontmatter[field];
@@ -207,7 +207,7 @@ export class FrontmatterParser {
   static merge(...frontmatters: FrontmatterData[]): FrontmatterData {
     return frontmatters.reduce(
       (merged, current) => ({ ...merged, ...current }),
-      { ...DEFAULT_FRONTMATTER }
+      { ...DEFAULT_FRONTMATTER },
     );
   }
 }
@@ -390,7 +390,7 @@ export class BlogProcessor {
    * Get all blog metadata with filtering and sorting
    */
   async getAllBlogMeta(
-    options: BlogProcessingOptions = {}
+    options: BlogProcessingOptions = {},
   ): Promise<BlogMeta[]> {
     return Logger.withTryCatch(async () => {
       const opts = { ...DEFAULT_BLOG_PROCESSING_OPTIONS, ...options };
@@ -412,8 +412,8 @@ export class BlogProcessor {
             if (!FrontmatterParser.validate(meta, opts.requiredFields)) {
               Logger.warn(
                 `Blog ${filePath} missing required fields: ${opts.requiredFields.join(
-                  ", "
-                )}`
+                  ", ",
+                )}`,
               );
               continue;
             }
@@ -440,7 +440,7 @@ export class BlogProcessor {
    */
   async getBlogBySlug(
     slug: string,
-    includeDrafts: boolean = false
+    includeDrafts: boolean = false,
   ): Promise<BlogPost | null> {
     return Logger.withTryCatch(async () => {
       // Find the matching file
@@ -497,7 +497,7 @@ export class BlogProcessor {
             (blog.description &&
               blog.description.toLowerCase().includes(searchTerm)) ||
             (blog.tags &&
-              blog.tags.some((tag) => tag.toLowerCase().includes(searchTerm)))
+              blog.tags.some((tag) => tag.toLowerCase().includes(searchTerm))),
         );
       }
 
@@ -539,7 +539,7 @@ export class BlogProcessor {
    */
   async getBlogsByTag(
     tag: string,
-    options: BlogProcessingOptions = {}
+    options: BlogProcessingOptions = {},
   ): Promise<BlogMeta[]> {
     return this.getAllBlogMeta({
       ...options,
@@ -555,7 +555,7 @@ export class BlogProcessor {
    */
   async getBlogsByCategory(
     category: string,
-    options: BlogProcessingOptions = {}
+    options: BlogProcessingOptions = {},
   ): Promise<BlogMeta[]> {
     return this.getAllBlogMeta({
       ...options,
@@ -570,7 +570,7 @@ export class BlogProcessor {
    * Get all unique tags with counts
    */
   async getTagsWithCounts(
-    includeDrafts: boolean = false
+    includeDrafts: boolean = false,
   ): Promise<TagWithCount[]> {
     return Logger.withTryCatch(async () => {
       const blogs = await this.getAllBlogMeta({ includeDrafts });
@@ -594,7 +594,7 @@ export class BlogProcessor {
    * Get all unique categories with counts
    */
   async getCategoriesWithCounts(
-    includeDrafts: boolean = false
+    includeDrafts: boolean = false,
   ): Promise<CategoryWithCount[]> {
     return Logger.withTryCatch(async () => {
       const blogs = await this.getAllBlogMeta({ includeDrafts });
@@ -625,9 +625,8 @@ export class BlogProcessor {
    * Get all categories (simple list)
    */
   async getAllCategories(includeDrafts: boolean = false): Promise<string[]> {
-    const categoriesWithCounts = await this.getCategoriesWithCounts(
-      includeDrafts
-    );
+    const categoriesWithCounts =
+      await this.getCategoriesWithCounts(includeDrafts);
     return categoriesWithCounts.map((c) => c.category);
   }
 
@@ -736,25 +735,68 @@ export class BlogProcessor {
   }
 
   /**
-   * Get map pins from blogs with location data
+   * Get map pins from blogs with location data or geocoded location name
    */
   async getBlogMapPins(): Promise<BlogMapPin[]> {
     return Logger.withTryCatch(async () => {
       const blogs = await this.getAllBlogMeta({ includeDrafts: false });
 
-      return blogs.filter(hasCoordinates).map((blog) => ({
-        id: blog.slug,
-        title: blog.title,
-        lat: blog.location.coordinates.lat,
-        lng: blog.location.coordinates.lng,
-        description: blog.description,
-        tags: blog.tags,
-        category: blog.category,
-        blogUrl: `/blogs/${blog.slug}`,
-        date: blog.date,
-        featured: blog.featured,
-        featuredPhoto: blog.featuredPhoto,
-      }));
+      // Helper to geocode location name
+      async function geocodeLocationName(
+        name: string,
+      ): Promise<{ lat: number; lng: number } | null> {
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(name)}`,
+          );
+          const data = await response.json();
+          if (data && data.length > 0) {
+            return {
+              lat: parseFloat(data[0].lat),
+              lng: parseFloat(data[0].lon),
+            };
+          }
+        } catch (e) {}
+        return null;
+      }
+
+      const pins: BlogMapPin[] = [];
+      for (const blog of blogs) {
+        if (hasCoordinates(blog)) {
+          pins.push({
+            id: blog.slug,
+            title: blog.title,
+            lat: blog.location.coordinates.lat,
+            lng: blog.location.coordinates.lng,
+            description: blog.description,
+            tags: blog.tags,
+            category: blog.category,
+            blogUrl: `/blogs/${blog.slug}`,
+            date: blog.date,
+            featured: blog.featured,
+            featuredPhoto: blog.featuredPhoto,
+          });
+        } else if (blog.location?.name) {
+          // Geocode location name if coordinates are missing
+          const geo = await geocodeLocationName(blog.location.name);
+          if (geo) {
+            pins.push({
+              id: blog.slug,
+              title: blog.title,
+              lat: geo.lat,
+              lng: geo.lng,
+              description: blog.description,
+              tags: blog.tags,
+              category: blog.category,
+              blogUrl: `/blogs/${blog.slug}`,
+              date: blog.date,
+              featured: blog.featured,
+              featuredPhoto: blog.featuredPhoto,
+            });
+          }
+        }
+      }
+      return pins;
     }, "getting blog map pins");
   }
 
@@ -815,7 +857,7 @@ export class BlogProcessor {
   private sortBlogs(
     blogs: BlogMeta[],
     sortBy: BlogProcessingOptions["sortBy"] = "date",
-    order: BlogProcessingOptions["sortOrder"] = "desc"
+    order: BlogProcessingOptions["sortOrder"] = "desc",
   ): BlogMeta[] {
     return blogs.sort((a, b) => {
       let comparison = 0;
@@ -879,7 +921,7 @@ export const getBlogsByTag = (tag: string, options?: BlogProcessingOptions) =>
 
 export const getBlogsByCategory = (
   category: string,
-  options?: BlogProcessingOptions
+  options?: BlogProcessingOptions,
 ) => defaultBlogProcessor.getBlogsByCategory(category, options);
 
 export const getAllTags = (includeDrafts?: boolean) =>
