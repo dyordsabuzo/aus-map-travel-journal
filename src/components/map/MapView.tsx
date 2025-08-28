@@ -12,6 +12,12 @@ import "leaflet/dist/leaflet.css";
 import BlogPinPopup from "./BlogPinPopup";
 import AddPinButton from "./AddPinButton";
 import AddPinInput from "./AddPinInput";
+import TravelStatsBox from "./TravelStatsBox/TravelStatsBox";
+import {
+  calculateMileage,
+  getUniqueTowns,
+  getTownsPerState,
+} from "../../utils/travelstats";
 import { BlogMapPin } from "../../types/BlogType";
 import { useBlogPins } from "./hooks/useBlogPins";
 import { geocodeAddress } from "./utils/geocodeAddress";
@@ -121,6 +127,14 @@ const MapView: React.FC<{
     [addressInput, addPin, handleInputClose],
   );
 
+  // Compute travel stats from pins
+  const mileageKm = calculateMileage(pins);
+  const townsVisited = getUniqueTowns(pins).length;
+  // Example state extractor: assumes state info is in pin.category or first tag
+  const stateExtractor = (pin: BlogMapPin) =>
+    pin.category || (pin.tags && pin.tags.length > 0 ? pin.tags[0] : undefined);
+  const townsPerState = getTownsPerState(pins, stateExtractor);
+
   return (
     <div className="relative h-screen w-screen">
       <AddPinButton onClick={handleAddPinClick} />
@@ -131,11 +145,21 @@ const MapView: React.FC<{
         onSubmit={handleAddressSubmit}
         onClose={handleInputClose}
       />
+      {/* Floating TravelStatsBox under zoom controls */}
+      <TravelStatsBox
+        stats={{
+          mileageKm,
+          townsVisited,
+          townsPerState,
+        }}
+        className=""
+        style={{ top: 80, left: 16 }} // adjust as needed for zoom control position
+      />
       <MapContainer
         center={initialCenter}
         zoom={initialZoom}
         minZoom={initialZoom}
-        maxZoom={15}
+        maxZoom={19}
         className="h-screen w-screen"
         maxBounds={bounds}
         maxBoundsViscosity={1.0}
