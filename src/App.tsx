@@ -7,9 +7,40 @@ import MapView from "@components/map/MapView";
 import { logger } from "@utils/logger";
 import { useAlert } from "@components/common/AlertContext";
 
+// Theme toggle button
+const ThemeToggle: React.FC<{
+  theme: string;
+  setTheme: (t: string) => void;
+}> = ({ theme, setTheme }) => (
+  <button
+    className="ml-auto px-3 py-1 rounded text-sm bg-gray-200 dark:bg-gray-700 dark:text-gray-100 text-gray-800 hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+    onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+    aria-label="Toggle dark mode"
+    type="button"
+  >
+    {theme === "dark" ? "🌙 Dark" : "☀️ Light"}
+  </button>
+);
+
 function App() {
   const { showAlert } = useAlert(); // Initialize the alert hook
   const [isGeocoding, setIsGeocoding] = useState<boolean>(false);
+
+  // Theme state
+  const [theme, setTheme] = useState<string>(
+    window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light",
+  );
+
+  React.useEffect(() => {
+    if (theme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [theme]);
 
   const baseRoute = import.meta.env.VITE_BASE || "";
 
@@ -50,14 +81,18 @@ function App() {
 
   return (
     <Router>
-      <div className="h-screen w-screen bg-gray-100 flex flex-col">
-        <nav className="bg-white shadow px-4 py-2 flex items-center">
-          <Link to="/" className="text-xl font-bold text-blue-700 mr-6">
+      <div className="h-screen w-screen bg-gray-100 dark:bg-gray-900 flex flex-col transition-colors">
+        <nav className="bg-white dark:bg-gray-800 shadow px-4 py-2 flex items-center">
+          <Link
+            to="/"
+            className="text-xl font-bold text-blue-700 dark:text-blue-300 mr-6"
+          >
             Aussie Map Travel Journal
           </Link>
           {/*<Link to="/blogs" className="text-blue-600 hover:underline">
             Blogs
           </Link>*/}
+          <ThemeToggle theme={theme} setTheme={setTheme} />
         </nav>
         <div className="flex-1 flex flex-col">
           {/* Address input for geocoding */}
