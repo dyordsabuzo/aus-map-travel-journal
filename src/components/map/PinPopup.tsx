@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-import { Pin } from "@types/PinTypes";
+import { Pin } from "../../types/PinTypes";
 
 interface PinPopupProps {
   pin: Pin;

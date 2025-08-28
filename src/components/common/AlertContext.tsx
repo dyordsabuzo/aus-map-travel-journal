@@ -11,7 +11,7 @@ import {
   AlertState,
   AlertOptions,
   AlertType,
-} from "@types/AlertType";
+} from "../../types/AlertType";
 
 const AlertContext = createContext<AlertContextType | undefined>(undefined);
 

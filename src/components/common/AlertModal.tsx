@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { useAlert } from "@components/common/AlertContext";
-import { AlertType } from "@types/AlertType";
+import { AlertType } from "../../types/AlertType";
 
 export const AlertModal: React.FC = () => {
   const { alert, hideAlert } = useAlert();

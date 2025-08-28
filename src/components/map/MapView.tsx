@@ -9,8 +9,9 @@ import {
 } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import PinPopup from "./PinPopup";
-import { Pin } from "@types/PinTypes";
+import BlogPinPopup from "./BlogPinPopup";
+import { BlogMapPin } from "../../types/BlogType";
+import { getBlogMapPins } from "@utils/blogProcessor";
 
 // Define selected icon outside the component to avoid recreation
 const selectedIcon = L.icon({
@@ -41,17 +42,9 @@ const AUSTRALIA_BOUNDS: [[number, number], [number, number]] = [
   [-10, 154], // Northeast
 ];
 
-interface MapViewProps {
-  pins: Pin[];
-  onMapClick: (e: any) => void;
-  onMediaUpload: (pinIdx: number, files: FileList) => void;
-  startIdx: number | null;
-  endIdx: number | null;
-  onSetStart: (idx: number) => void;
-  onSetEnd: (idx: number) => void;
-}
+// No longer need MapViewProps, pins will be fetched internally
 
-function MapClickHandler({ onMapClick }: { onMapClick: (e: any) => void }) {
+function MapClickHandler({ onMapClick }: { onMapClick?: (e: any) => void }) {
   useMapEvents({
     click: (e) => {
       if (onMapClick) onMapClick(e);
@@ -60,81 +53,45 @@ function MapClickHandler({ onMapClick }: { onMapClick: (e: any) => void }) {
   return null;
 }
 
-const MapView: React.FC<MapViewProps> = ({
-  pins,
-  onMapClick,
-  onMediaUpload,
-  startIdx,
-  endIdx,
-  onSetStart,
-  onSetEnd,
-}) => (
-  <MapContainer
-    center={AUSTRALIA_CENTER}
-    zoom={4}
-    minZoom={4}
-    maxZoom={19}
-    className="h-screen w-screen"
-    maxBounds={AUSTRALIA_BOUNDS}
-    maxBoundsViscosity={1.0}
-  >
-    <TileLayer
-      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    />
-    <MapClickHandler onMapClick={onMapClick} />
-    {pins.map((pin, idx) => (
-      <Marker key={idx} position={pin.coords}>
-        <Popup>
-          <PinPopup
-            pin={pin}
-            onMediaUpload={(files) => onMediaUpload(idx, files)}
-          />
-          <div className="flex flex-col gap-2 mt-2">
-            <button
-              className={`px-2 py-1 rounded text-white ${
-                startIdx === idx
-                  ? "bg-green-600"
-                  : "bg-green-400 hover:bg-green-600"
-              }`}
-              onClick={() => onSetStart(idx)}
-              disabled={startIdx === idx}
-            >
-              {startIdx === idx ? "Start Point" : "Set as Start"}
-            </button>
-            <button
-              className={`px-2 py-1 rounded text-white ${
-                endIdx === idx ? "bg-blue-600" : "bg-blue-400 hover:bg-blue-600"
-              }`}
-              onClick={() => onSetEnd(idx)}
-              disabled={endIdx === idx}
-            >
-              {endIdx === idx ? "End Point" : "Set as End"}
-            </button>
-          </div>
-        </Popup>
-      </Marker>
-    ))}
-    {/* Draw dashed lines for all travels */}
-    {pins.map((pin, idx) =>
-      pin.travels.map((targetIdx) => {
-        const targetPin = pins[targetIdx];
-        if (!targetPin) return null;
-        return (
-          <Polyline
-            key={`travel-${idx}-${targetIdx}`}
-            positions={[pin.coords, targetPin.coords]}
-            pathOptions={{
-              color: "#2563eb",
-              dashArray: "8 12",
-              weight: 4,
-              opacity: 0.7,
-            }}
-          />
-        );
-      })
-    )}
-  </MapContainer>
-);
+const MapView: React.FC = () => {
+  const [pins, setPins] = React.useState<BlogMapPin[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const fetchPins = async () => {
+      setLoading(true);
+      const blogPins = await getBlogMapPins();
+      setPins(blogPins);
+      setLoading(false);
+    };
+    fetchPins();
+  }, []);
+
+  return (
+    <MapContainer
+      center={AUSTRALIA_CENTER}
+      zoom={4}
+      minZoom={4}
+      maxZoom={19}
+      className="h-screen w-screen"
+      maxBounds={AUSTRALIA_BOUNDS}
+      maxBoundsViscosity={1.0}
+    >
+      <TileLayer
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      />
+      <MapClickHandler />
+      {!loading &&
+        pins.map((pin, idx) => (
+          <Marker key={pin.id} position={[pin.lat, pin.lng]}>
+            <Popup>
+              <BlogPinPopup pin={pin} />
+            </Popup>
+          </Marker>
+        ))}
+    </MapContainer>
+  );
+};
 
 export default MapView;

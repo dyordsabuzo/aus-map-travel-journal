@@ -3,8 +3,8 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import { Link, useLocation } from "react-router-dom";
-import { blogFiles, extractMeta } from "@utils/blogextract";
-import { BlogPost } from "@types/BlogType";
+import { getBlogBySlug } from "@utils/blogProcessor";
+import { BlogPost } from "../../types/BlogType";
 
 export const BlogViewer: React.FC = () => {
   const [post, setPost] = useState<BlogPost | null>(null);
@@ -14,20 +14,21 @@ export const BlogViewer: React.FC = () => {
   const slug = location.pathname.split("/").pop() || "";
 
   useEffect(() => {
-    // Find the file path for this slug
-    const filePath = Object.keys(blogFiles).find((fp) =>
-      fp.endsWith(`/${slug}.md`)
-    );
-    if (!filePath) {
-      setPost(null);
-      return;
-    }
-    const load = async () => {
-      const content = await (blogFiles[filePath] as () => Promise<string>)();
-      const meta = extractMeta(content, filePath);
-      setPost({ ...meta, content });
+    const loadPost = async () => {
+      try {
+        const blogPost = await getBlogBySlug(slug, false);
+        setPost(blogPost);
+      } catch (error) {
+        console.error("Failed to load blog post:", error);
+        setPost(null);
+      }
     };
-    load();
+
+    if (slug) {
+      loadPost();
+    } else {
+      setPost(null);
+    }
   }, [slug]);
 
   if (!post) {
@@ -43,10 +44,10 @@ export const BlogViewer: React.FC = () => {
 
   return (
     <div className="max-w-2xl mx-auto py-8">
-      {/*<h1 className="text-3xl font-bold mb-2">{post.title}</h1>
+      <h1 className="text-3xl font-bold mb-2">{post.title}</h1>
       {post.date && (
         <div className="text-gray-500 text-sm mb-4">{post.date}</div>
-      )}*/}
+      )}
       <div className="prose">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}

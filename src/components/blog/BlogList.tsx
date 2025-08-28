@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { BlogMeta } from "@types/BlogType";
-import { blogFiles, extractMeta } from "@utils/blogextract";
+import { BlogMeta } from "../../types/BlogType";
+import { getAllBlogMeta } from "@utils/blogProcessor";
 import { Logger } from "@utils/logger";
 
 export const BlogList: React.FC = () => {
@@ -10,19 +10,19 @@ export const BlogList: React.FC = () => {
   const [blogs, setBlogs] = useState<BlogMeta[]>([]);
 
   useEffect(() => {
-    // Load all blog files and extract metadata
+    // Load all blog metadata using the new consolidated API
     const loadBlogs = async () => {
-      const entries = Object.entries(blogFiles);
-
-      Logger.debug("Loading blogs...", { blogFiles, entries });
-      const loaded: BlogMeta[] = [];
-      for (const [filePath, loader] of entries) {
-        const content = await (loader as () => Promise<string>)();
-        loaded.push(extractMeta(content, filePath));
+      try {
+        Logger.debug("Loading blogs...");
+        const loaded = await getAllBlogMeta({
+          includeDrafts: false,
+          sortBy: "date",
+          sortOrder: "desc",
+        });
+        setBlogs(loaded);
+      } catch (error) {
+        Logger.error("Failed to load blogs:", error);
       }
-      // Sort by date descending if available
-      loaded.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
-      setBlogs(loaded);
     };
     loadBlogs();
   }, []);
