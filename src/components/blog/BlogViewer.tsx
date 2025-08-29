@@ -6,6 +6,37 @@ import { Link, useLocation } from "react-router-dom";
 import { getBlogBySlug } from "@utils/blogProcessor";
 import { BlogPost } from "../../types/BlogType";
 
+// Instagram/Facebook Reels embed components
+const InstagramReel = ({ url }: { url: string }) => (
+  <div className="my-4">
+    <iframe
+      src={`https://www.instagram.com/reel/${url.split("/reel/")[1]?.split("/")[0]}/embed`}
+      width="100%"
+      height="480"
+      allow="autoplay; encrypted-media"
+      allowFullScreen
+      frameBorder="0"
+      className="rounded"
+      title="Instagram Reel"
+    />
+  </div>
+);
+
+const FacebookReel = ({ url }: { url: string }) => (
+  <div className="my-4">
+    <iframe
+      src={`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}`}
+      width="100%"
+      height="480"
+      allow="autoplay; encrypted-media"
+      allowFullScreen
+      frameBorder="0"
+      className="rounded"
+      title="Facebook Reel"
+    />
+  </div>
+);
+
 export const BlogViewer: React.FC = () => {
   const [post, setPost] = useState<BlogPost | null>(null);
   const location = useLocation();
@@ -52,6 +83,28 @@ export const BlogViewer: React.FC = () => {
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           rehypePlugins={[rehypeHighlight]}
+          components={{
+            // Custom renderer for Instagram/Facebook Reels
+            a: ({ href = "", children, ...props }) => {
+              if (
+                href.includes("instagram.com/reel/") &&
+                !href.includes("embed")
+              ) {
+                return <InstagramReel url={href} />;
+              }
+              if (
+                href.includes("facebook.com/reel/") ||
+                href.includes("facebook.com/watch/")
+              ) {
+                return <FacebookReel url={href} />;
+              }
+              return (
+                <a href={href} {...props}>
+                  {children}
+                </a>
+              );
+            },
+          }}
         >
           {post.content}
         </ReactMarkdown>
