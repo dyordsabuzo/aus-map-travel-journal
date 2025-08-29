@@ -17,10 +17,11 @@ import {
   calculateMileage,
   getUniqueTowns,
   getTownsPerState,
-} from "../../utils/travelstats";
+} from "./TravelStatsBox/utils";
 import { BlogMapPin } from "../../types/BlogType";
 import { useBlogPins } from "./hooks/useBlogPins";
 import { geocodeAddress } from "./utils/geocodeAddress";
+import { useAlert } from "@components/common/AlertContext";
 
 // Define selected icon outside the component to avoid recreation
 const selectedIcon = L.icon({
@@ -77,6 +78,8 @@ const MapView: React.FC<{
   const { pins, addPin, loading, updatePin, resetPins } = useBlogPins();
   const [showAddPinInput, setShowAddPinInput] = useState(false);
   const [addressInput, setAddressInput] = useState("");
+  const [savingLocation, setSavingLocation] = useState(false);
+  const { showAlert } = useAlert();
 
   // Show/hide input field
   const handleAddPinClick = useCallback(() => {
@@ -131,53 +134,149 @@ const MapView: React.FC<{
   const mileageKm = calculateMileage(pins);
   const townsVisited = getUniqueTowns(pins).length;
   // Example state extractor: assumes state info is in pin.category or first tag
-  const stateExtractor = (pin: BlogMapPin) =>
+  const stateExtractor = (pin) =>
     pin.category || (pin.tags && pin.tags.length > 0 ? pin.tags[0] : undefined);
   const townsPerState = getTownsPerState(pins, stateExtractor);
 
   return (
     <div className="relative h-screen w-screen">
-      <AddPinButton onClick={handleAddPinClick} />
-      <AddPinInput
-        visible={showAddPinInput}
-        address={addressInput}
-        onAddressChange={handleAddressChange}
-        onSubmit={handleAddressSubmit}
-        onClose={handleInputClose}
-      />
-      {/* Floating TravelStatsBox under zoom controls */}
-      <TravelStatsBox
-        stats={{
-          mileageKm,
-          townsVisited,
-          townsPerState,
-        }}
-        className=""
-        style={{ top: 80, left: 16 }} // adjust as needed for zoom control position
-      />
-      <MapContainer
-        center={initialCenter}
-        zoom={initialZoom}
-        minZoom={initialZoom}
-        maxZoom={19}
-        className="h-screen w-screen"
-        maxBounds={bounds}
-        maxBoundsViscosity={1.0}
+      {/* Spinner overlay when loading pins */}
+      {loading && (
+        <div className="fixed inset-0 z-[2000] flex flex-col items-center justify-center bg-black bg-opacity-40 pointer-events-auto transition-opacity">
+          <div className="flex flex-col items-center">
+            <svg
+              className="animate-spin h-12 w-12 text-blue-500 mb-4"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v8z"
+              />
+            </svg>
+            <span className="text-white text-xl font-semibold">
+              Fetching pins ...
+            </span>
+          </div>
+        </div>
+      )}
+      <div
+        className={
+          loading
+            ? "pointer-events-none opacity-40"
+            : "opacity-100 transition-opacity"
+        }
       >
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        <AddPinButton onClick={handleAddPinClick} />
+        <AddPinInput
+          visible={showAddPinInput}
+          address={addressInput}
+          onAddressChange={handleAddressChange}
+          onSubmit={handleAddressSubmit}
+          onClose={handleInputClose}
         />
-        <MapClickHandler />
-        {!loading &&
-          pins.map((pin) => (
-            <Marker key={pin.id} position={[pin.lat, pin.lng]}>
-              <Popup>
-                <BlogPinPopup pin={pin} />
-              </Popup>
-            </Marker>
-          ))}
-      </MapContainer>
+        {/* Floating Save Current Location Button */}
+        <button
+          className="fixed top-24 right-8 z-[1000] bg-green-600 text-white px-4 py-2 rounded-full shadow-lg hover:bg-green-700 transition-all text-sm flex items-center"
+          style={{ minWidth: "70px" }}
+          onClick={async () => {
+            setSavingLocation(true);
+            if ("geolocation" in navigator) {
+              navigator.geolocation.getCurrentPosition(
+                async (pos) => {
+                  const { latitude, longitude } = pos.coords;
+                  const newPin = {
+                    id: "",
+                    lat: latitude,
+                    lng: longitude,
+                    title: "My Current Location",
+                    blogUrl: "#",
+                    featuredPhoto: "",
+                    date: new Date().toISOString(),
+                    description: "",
+                    tags: [],
+                    category: "",
+                    featured: false,
+                  };
+                  await addPin(newPin);
+                  setSavingLocation(false);
+                  showAlert({
+                    message: "Current location saved as a pin!",
+                    type: "success",
+                    duration: 4000,
+                  });
+                },
+                (err) => {
+                  setSavingLocation(false);
+                  showAlert({
+                    message:
+                      "Unable to get current location. Please enter an address manually using 'Add pin'.",
+                    type: "warning",
+                    duration: 6000,
+                  });
+                  setShowAddPinInput(true);
+                },
+              );
+            } else {
+              setSavingLocation(false);
+              showAlert({
+                message:
+                  "Geolocation is not supported by your browser. Please enter an address manually using 'Add pin'.",
+                type: "error",
+                duration: 6000,
+              });
+              setShowAddPinInput(true);
+            }
+          }}
+          disabled={savingLocation}
+          aria-label="Save current location"
+        >
+          {savingLocation ? "Saving..." : "Save Current Location"}
+        </button>
+        {/* Floating TravelStatsBox under zoom controls */}
+        <TravelStatsBox
+          stats={{
+            mileageKm,
+            townsVisited,
+            townsPerState,
+          }}
+          className=""
+          style={{ top: 80, left: 16 }} // adjust as needed for zoom control position
+        />
+        <MapContainer
+          center={initialCenter}
+          zoom={initialZoom}
+          minZoom={initialZoom}
+          maxZoom={19}
+          className="h-screen w-screen"
+          maxBounds={bounds}
+          maxBoundsViscosity={1.0}
+        >
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          />
+          <MapClickHandler />
+          {!loading &&
+            pins.map((pin) => (
+              <Marker key={pin.id} position={[pin.lat, pin.lng]}>
+                <Popup>
+                  <BlogPinPopup pin={pin} />
+                </Popup>
+              </Marker>
+            ))}
+        </MapContainer>
+      </div>
     </div>
   );
 };
