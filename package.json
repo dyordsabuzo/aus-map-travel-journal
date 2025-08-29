@@ -15,6 +15,7 @@
     "@types/react-leaflet": "^3.0.0",
     "@vitejs/plugin-react": "^5.0.1",
     "consola": "^3.4.2",
+    "firebase": "^12.2.1",
     "js-yaml": "^4.1.0",
     "leaflet": "^1.9.4",
     "react": "^18.2.0",

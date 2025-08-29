@@ -74,7 +74,7 @@ const MapView: React.FC<{
     [-10, 154], // Northeast
   ],
 }) => {
-  const { pins, addPin, loading } = useBlogPins();
+  const { pins, addPin, loading, updatePin, resetPins } = useBlogPins();
   const [showAddPinInput, setShowAddPinInput] = useState(false);
   const [addressInput, setAddressInput] = useState("");
 
@@ -106,7 +106,7 @@ const MapView: React.FC<{
       const geo = await geocodeAddress(addressInput);
       if (geo) {
         const newPin: BlogMapPin = {
-          id: `user-${Date.now()}`,
+          id: "", // Firestore will assign ID
           lat: geo.lat,
           lng: geo.lng,
           title: geo.displayName,
@@ -118,7 +118,7 @@ const MapView: React.FC<{
           category: "",
           featured: false,
         };
-        addPin(newPin);
+        await addPin(newPin);
         handleInputClose();
       } else {
         alert("Address not found. Please try a different address.");
