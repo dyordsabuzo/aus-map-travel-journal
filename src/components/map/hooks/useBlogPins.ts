@@ -18,7 +18,7 @@ export function useBlogPins() {
   const queryClient = useQueryClient();
 
   // Fetch pins from Firestore and blogs, merge and cache
-  const { data: pins = [], isLoading: loading } = useQuery({
+  const { data: pins = [], isLoading: loading } = useQuery<BlogMapPin[]>({
     queryKey: ["pins", "all"],
     queryFn: async () => {
       const [firestorePins, blogPins] = await Promise.all([
@@ -31,8 +31,8 @@ export function useBlogPins() {
         ...firestorePins.filter((p) => !blogPinIds.has(p.id)),
       ];
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
     cacheTime: 1000 * 60 * 10, // 10 minutes
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   // Mutations for add/update/delete

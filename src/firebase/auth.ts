@@ -1,4 +1,3 @@
-import { initializeApp } from "firebase/app";
 import {
   getAuth,
   signInWithPopup,
@@ -10,11 +9,8 @@ import {
   onAuthStateChanged,
   User,
 } from "firebase/auth";
+import { app } from "./app";
 
-// Import config from firestore.ts or define here
-import { firebaseConfig } from "./firestore";
-
-const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
 export function signInWithGoogle() {
