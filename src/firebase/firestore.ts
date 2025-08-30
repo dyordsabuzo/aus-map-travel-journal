@@ -30,11 +30,14 @@ import {
   setDoc,
   DocumentData,
   QuerySnapshot,
+  query,
+  where,
 } from "firebase/firestore";
 import { BlogMapPin } from "../types/BlogType";
+import { auth } from "./auth";
 
-// --- Load Firebase config from environment variables ---
-const firebaseConfig = {
+// TODO: Replace with your Firebase project config
+export const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
@@ -50,17 +53,23 @@ const PINS_COLLECTION = "pins";
 
 // --- CRUD Utilities ---
 
-// Add a new pin
+// Add a new pin, tied to the current user
 export async function addPin(pin: BlogMapPin): Promise<string> {
-  const docRef = await addDoc(collection(db, PINS_COLLECTION), pin);
+  const userId = auth.currentUser?.uid;
+  const docRef = await addDoc(collection(db, PINS_COLLECTION), {
+    ...pin,
+    userId,
+  });
   return docRef.id;
 }
 
-// Get all pins
+// Get all pins for the current user
 export async function getAllPins(): Promise<BlogMapPin[]> {
-  const querySnapshot: QuerySnapshot<DocumentData> = await getDocs(
-    collection(db, PINS_COLLECTION),
-  );
+  const userId = auth.currentUser?.uid;
+  const pinsQuery = userId
+    ? query(collection(db, PINS_COLLECTION), where("userId", "==", userId))
+    : collection(db, PINS_COLLECTION);
+  const querySnapshot: QuerySnapshot<DocumentData> = await getDocs(pinsQuery);
   return querySnapshot.docs.map((doc) => ({
     ...(doc.data() as BlogMapPin),
     id: doc.id,

@@ -217,6 +217,7 @@ export interface BlogMapPin {
   date?: string;
   featured?: boolean;
   featuredPhoto?: string;
+  userId?: string;
 }
 
 /**
@@ -310,19 +311,19 @@ export const isBlogPost = (obj: any): obj is BlogPost => {
 };
 
 export const hasLocation = (
-  blog: BlogMeta
+  blog: BlogMeta,
 ): blog is BlogMeta & { location: NonNullable<BlogLocation> } => {
   return Boolean(blog.location);
 };
 
 export const hasCoordinates = (
-  blog: BlogMeta
+  blog: BlogMeta,
 ): blog is BlogMeta & {
   location: BlogLocation & {
     coordinates: NonNullable<BlogLocation["coordinates"]>;
   };
 } => {
   return Boolean(
-    blog.location?.coordinates?.lat && blog.location?.coordinates?.lng
+    blog.location?.coordinates?.lat && blog.location?.coordinates?.lng,
   );
 };

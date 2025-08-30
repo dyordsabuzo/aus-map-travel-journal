@@ -1,11 +1,11 @@
-import { BlogMapPin } from "../../types/BlogType";
+import { BlogMapPin } from "../../../types/BlogType";
 
 // Helper to calculate distance between two lat/lng points (Haversine formula)
 export function haversineDistance(
   lat1: number,
   lng1: number,
   lat2: number,
-  lng2: number
+  lng2: number,
 ): number {
   const toRad = (value: number) => (value * Math.PI) / 180;
   const R = 6371; // Earth's radius in km
@@ -30,7 +30,7 @@ export function calculateMileage(pins: BlogMapPin[]): number {
       pins[i - 1].lat,
       pins[i - 1].lng,
       pins[i].lat,
-      pins[i].lng
+      pins[i].lng,
     );
   }
   return Math.round(total * 10) / 10; // round to 1 decimal
@@ -48,7 +48,7 @@ export function getUniqueTowns(pins: BlogMapPin[]): string[] {
 // Count towns per state (assumes pin.category or tags include state info)
 export function getTownsPerState(
   pins: BlogMapPin[],
-  stateExtractor: (pin: BlogMapPin) => string | undefined
+  stateExtractor: (pin: BlogMapPin) => string | undefined,
 ): Record<string, number> {
   const stateCounts: Record<string, Set<string>> = {};
   pins.forEach((pin) => {

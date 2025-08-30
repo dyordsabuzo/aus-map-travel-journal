@@ -8,6 +8,7 @@ export interface TravelStats {
 
 export interface TravelStatsBoxProps {
   stats: TravelStats;
+  title?: string;
   className?: string;
   style?: React.CSSProperties;
 }

@@ -13,6 +13,12 @@ import BlogPinPopup from "./BlogPinPopup";
 import AddPinButton from "./AddPinButton";
 import AddPinInput from "./AddPinInput";
 import TravelStatsBox from "./TravelStatsBox/TravelStatsBox";
+import UserProfileBox from "../auth/UserProfileBox";
+import { useAuth } from "../auth/AuthContext";
+import {
+  updatePin as updateFirestorePin,
+  deletePin as deleteFirestorePin,
+} from "../../firebase/firestore";
 import {
   calculateMileage,
   getUniqueTowns,
@@ -75,11 +81,18 @@ const MapView: React.FC<{
     [-10, 154], // Northeast
   ],
 }) => {
-  const { pins, addPin, loading, updatePin, resetPins } = useBlogPins();
+  const { pins, addPin, loading, resetPins } = useBlogPins();
   const [showAddPinInput, setShowAddPinInput] = useState(false);
   const [addressInput, setAddressInput] = useState("");
   const [savingLocation, setSavingLocation] = useState(false);
   const { showAlert } = useAlert();
+  const [showLocationHelp, setShowLocationHelp] = useState(false);
+  const [manualPinMode, setManualPinMode] = useState(false);
+  // Removed manualPinCoords as it's unused
+
+  // Add missing user and showAllPins state
+  const { user } = useAuth();
+  const [showAllPins, setShowAllPins] = useState<boolean>(false);
 
   // Show/hide input field
   const handleAddPinClick = useCallback(() => {
@@ -120,6 +133,7 @@ const MapView: React.FC<{
           tags: [],
           category: "",
           featured: false,
+          ...(user ? { userId: user.uid } : {}),
         };
         await addPin(newPin);
         handleInputClose();
@@ -127,16 +141,61 @@ const MapView: React.FC<{
         alert("Address not found. Please try a different address.");
       }
     },
-    [addressInput, addPin, handleInputClose],
+    [addressInput, addPin, handleInputClose, user],
   );
 
   // Compute travel stats from pins
-  const mileageKm = calculateMileage(pins);
-  const townsVisited = getUniqueTowns(pins).length;
+  // Filter pins for user-specific stats
+  const userPins = user
+    ? pins.filter((p: BlogMapPin) => (p as any).userId === user.uid)
+    : [];
+  const statsPins = showAllPins ? pins : userPins;
+
+  const mileageKm = calculateMileage(statsPins);
+  const townsVisited = getUniqueTowns(statsPins).length;
   // Example state extractor: assumes state info is in pin.category or first tag
-  const stateExtractor = (pin) =>
+  const stateExtractor = (pin: BlogMapPin) =>
     pin.category || (pin.tags && pin.tags.length > 0 ? pin.tags[0] : undefined);
-  const townsPerState = getTownsPerState(pins, stateExtractor);
+  const townsPerState = getTownsPerState(statsPins, stateExtractor);
+
+  // Pin edit/delete modal state
+  const [editingPin, setEditingPin] = useState<BlogMapPin | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [deletingPin, setDeletingPin] = useState<BlogMapPin | null>(null);
+
+  // Edit pin handler
+  const handleEditPin = async () => {
+    if (editingPin) {
+      await updateFirestorePin(editingPin.id, {
+        title: editTitle,
+        description: editDescription,
+      });
+      showAlert({
+        message: "Pin updated!",
+        type: "success",
+        duration: 3000,
+      });
+      setEditingPin(null);
+      setEditTitle("");
+      setEditDescription("");
+      resetPins();
+    }
+  };
+
+  // Delete pin handler
+  const handleDeletePin = async () => {
+    if (deletingPin) {
+      await deleteFirestorePin(deletingPin.id);
+      showAlert({
+        message: "Pin deleted!",
+        type: "info",
+        duration: 3000,
+      });
+      setDeletingPin(null);
+      resetPins();
+    }
+  };
 
   return (
     <div className="relative h-screen w-screen">
@@ -177,72 +236,108 @@ const MapView: React.FC<{
             : "opacity-100 transition-opacity"
         }
       >
-        <AddPinButton onClick={handleAddPinClick} />
-        <AddPinInput
-          visible={showAddPinInput}
-          address={addressInput}
-          onAddressChange={handleAddressChange}
-          onSubmit={handleAddressSubmit}
-          onClose={handleInputClose}
-        />
-        {/* Floating Save Current Location Button */}
-        <button
-          className="fixed top-24 right-8 z-[1000] bg-green-600 text-white px-4 py-2 rounded-full shadow-lg hover:bg-green-700 transition-all text-sm flex items-center"
-          style={{ minWidth: "70px" }}
-          onClick={async () => {
-            setSavingLocation(true);
-            if ("geolocation" in navigator) {
-              navigator.geolocation.getCurrentPosition(
-                async (pos) => {
-                  const { latitude, longitude } = pos.coords;
-                  const newPin = {
-                    id: "",
-                    lat: latitude,
-                    lng: longitude,
-                    title: "My Current Location",
-                    blogUrl: "#",
-                    featuredPhoto: "",
-                    date: new Date().toISOString(),
-                    description: "",
-                    tags: [],
-                    category: "",
-                    featured: false,
-                  };
-                  await addPin(newPin);
-                  setSavingLocation(false);
-                  showAlert({
-                    message: "Current location saved as a pin!",
-                    type: "success",
-                    duration: 4000,
-                  });
-                },
-                (err) => {
+        {/* User Profile Box */}
+        <UserProfileBox />
+        {/* Toggle user pins/all pins */}
+        {user && (
+          <div className="fixed top-44 left-8 z-[1000]">
+            <button
+              className={`px-3 py-1 rounded shadow text-sm font-semibold ${
+                showAllPins
+                  ? "bg-gray-300 text-gray-700"
+                  : "bg-blue-600 text-white"
+              }`}
+              onClick={() => setShowAllPins((v: boolean) => !v)}
+            >
+              {showAllPins ? "Show My Pins Only" : "Show All Pins"}
+            </button>
+            <span className="ml-2 text-xs text-gray-600">
+              Pins created: {userPins.length}
+            </span>
+          </div>
+        )}
+        {/* Only show AddPinButton and AddPinInput if user is logged in */}
+        {user && (
+          <>
+            <AddPinButton onClick={handleAddPinClick} />
+            <AddPinInput
+              visible={showAddPinInput}
+              address={addressInput}
+              onAddressChange={handleAddressChange}
+              onSubmit={handleAddressSubmit}
+              onClose={handleInputClose}
+            />
+            {/* Floating Save Current Location Button */}
+            <button
+              className="fixed top-24 right-8 z-[1000] bg-green-600 text-white px-4 py-2 rounded-full shadow-lg hover:bg-green-700 transition-all text-sm flex items-center"
+              style={{ minWidth: "70px" }}
+              onClick={async () => {
+                setSavingLocation(true);
+                if ("geolocation" in navigator) {
+                  navigator.geolocation.getCurrentPosition(
+                    async (pos) => {
+                      const { latitude, longitude } = pos.coords;
+                      const newPin: BlogMapPin = {
+                        id: "",
+                        lat: latitude,
+                        lng: longitude,
+                        title: "My Current Location",
+                        blogUrl: "#",
+                        featuredPhoto: "",
+                        date: new Date().toISOString(),
+                        description: "",
+                        tags: [],
+                        category: "",
+                        featured: false,
+                        userId: user.uid,
+                      };
+                      await addPin(newPin);
+                      setSavingLocation(false);
+                      showAlert({
+                        message: `Current location saved as a pin!`,
+                        type: "success",
+                        duration: 4000,
+                      });
+                    },
+                    () => {
+                      setSavingLocation(false);
+                      showAlert({
+                        message:
+                          "Unable to get current location. You can manually enter an address, or click on the map to set your location.",
+                        type: "warning",
+                        duration: 6000,
+                      });
+                      setShowLocationHelp(true);
+                      setManualPinMode(true);
+                      setShowAddPinInput(true);
+                    },
+                  );
+                } else {
                   setSavingLocation(false);
                   showAlert({
                     message:
-                      "Unable to get current location. Please enter an address manually using 'Add pin'.",
-                    type: "warning",
+                      "Geolocation is not supported by your browser. You can manually enter an address, or click on the map to set your location.",
+                    type: "error",
                     duration: 6000,
                   });
+                  setShowLocationHelp(true);
+                  setManualPinMode(true);
                   setShowAddPinInput(true);
-                },
-              );
-            } else {
-              setSavingLocation(false);
-              showAlert({
-                message:
-                  "Geolocation is not supported by your browser. Please enter an address manually using 'Add pin'.",
-                type: "error",
-                duration: 6000,
-              });
-              setShowAddPinInput(true);
-            }
-          }}
-          disabled={savingLocation}
-          aria-label="Save current location"
-        >
-          {savingLocation ? "Saving..." : "Save Current Location"}
-        </button>
+                }
+              }}
+              disabled={savingLocation}
+              aria-label="Save current location"
+            >
+              {savingLocation ? "Saving..." : "Save Current Location"}
+            </button>
+          </>
+        )}
+        {/* If not logged in, show a message */}
+        {!user && (
+          <div className="fixed top-24 right-8 z-[1000] bg-gray-200 text-gray-700 px-4 py-2 rounded shadow-lg text-sm">
+            Please log in to add pins.
+          </div>
+        )}
         {/* Floating TravelStatsBox under zoom controls */}
         <TravelStatsBox
           stats={{
@@ -266,17 +361,171 @@ const MapView: React.FC<{
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           />
-          <MapClickHandler />
+          {/* Map click handler for manual pin placement */}
+          <MapClickHandler
+            onMapClick={
+              manualPinMode && user
+                ? (e: any) => {
+                    const { lat, lng } = e.latlng;
+                    setManualPinMode(false);
+                    setShowLocationHelp(false);
+                    setShowAddPinInput(false);
+                    showAlert({
+                      message: "Location selected! Saving pin...",
+                      type: "success",
+                      duration: 4000,
+                    });
+                    const newPin: BlogMapPin = {
+                      id: "",
+                      lat,
+                      lng,
+                      title: "Manual Location Pin",
+                      blogUrl: "#",
+                      featuredPhoto: "",
+                      date: new Date().toISOString(),
+                      description: "",
+                      tags: [],
+                      category: "",
+                      featured: false,
+                      userId: user.uid,
+                    };
+                    addPin(newPin);
+                  }
+                : undefined
+            }
+          />
           {!loading &&
-            pins.map((pin) => (
-              <Marker key={pin.id} position={[pin.lat, pin.lng]}>
-                <Popup>
-                  <BlogPinPopup pin={pin} />
-                </Popup>
-              </Marker>
-            ))}
+            statsPins.map((pin) => {
+              // Set marker color to light blue if pin.type === 'stopover', else normal blue
+              const markerIcon =
+                pin.type === "stopover"
+                  ? L.icon({
+                      iconUrl:
+                        "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-lightblue.png",
+                      iconSize: [25, 41],
+                      iconAnchor: [12, 41],
+                      popupAnchor: [1, -34],
+                      shadowUrl:
+                        "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+                      shadowSize: [41, 41],
+                    })
+                  : L.icon({
+                      iconUrl:
+                        "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
+                      iconSize: [25, 41],
+                      iconAnchor: [12, 41],
+                      popupAnchor: [1, -34],
+                      shadowUrl:
+                        "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+                      shadowSize: [41, 41],
+                    });
+              return (
+                <Marker
+                  key={pin.id}
+                  position={[pin.lat, pin.lng]}
+                  icon={markerIcon}
+                >
+                  <Popup>
+                    <BlogPinPopup
+                      pin={pin}
+                      user={user}
+                      onEdit={() => {
+                        setEditingPin(pin);
+                        setEditTitle(pin.title);
+                        setEditDescription(pin.description || "");
+                      }}
+                      onDelete={() => setDeletingPin(pin)}
+                    />
+                  </Popup>
+                </Marker>
+              );
+            })}
         </MapContainer>
+        {/* Help tooltip for manual location */}
+        {showLocationHelp && (
+          <div className="fixed top-36 right-8 z-[1100] bg-yellow-100 border border-yellow-400 text-yellow-900 px-4 py-3 rounded shadow-lg w-80">
+            <div className="font-bold mb-1">Location Help</div>
+            <div>
+              <span>
+                Your browser could not determine your location.
+                <br />
+                <b>Tip:</b> You can manually set your location by clicking on
+                the map, or enter an address using "Add pin".
+              </span>
+            </div>
+            <button
+              className="mt-3 px-3 py-1 bg-yellow-300 rounded text-sm font-semibold hover:bg-yellow-400"
+              onClick={() => setShowLocationHelp(false)}
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
       </div>
+      {/* Edit Pin Modal */}
+      {editingPin && (
+        <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-6 w-[340px]">
+            <h3 className="font-bold text-lg mb-2">Edit Pin</h3>
+            <label className="block mb-2 text-sm font-semibold">Title</label>
+            <input
+              type="text"
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              className="w-full border px-2 py-1 rounded mb-3"
+            />
+            <label className="block mb-2 text-sm font-semibold">
+              Description
+            </label>
+            <textarea
+              value={editDescription}
+              onChange={(e) => setEditDescription(e.target.value)}
+              className="w-full border px-2 py-1 rounded mb-3"
+              rows={3}
+            />
+            <div className="flex gap-2 justify-end">
+              <button
+                className="px-3 py-1 bg-gray-300 rounded"
+                onClick={() => setEditingPin(null)}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-3 py-1 bg-blue-600 text-white rounded"
+                onClick={handleEditPin}
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Delete Pin Modal */}
+      {deletingPin && (
+        <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-6 w-[340px]">
+            <h3 className="font-bold text-lg mb-2">Delete Pin</h3>
+            <p className="mb-4">
+              Are you sure you want to delete{" "}
+              <span className="font-semibold">{deletingPin.title}</span>?
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button
+                className="px-3 py-1 bg-gray-300 rounded"
+                onClick={() => setDeletingPin(null)}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-3 py-1 bg-red-600 text-white rounded"
+                onClick={handleDeletePin}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
