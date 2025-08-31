@@ -31,7 +31,7 @@ jobs:
         run: bun install
 
       - name: Build
-        run: bun run build
+        run: rm -rf ./dist && bun run build
         env:
           NODE_ENV: production
           VITE_BASE: /aus-map-travel-journal

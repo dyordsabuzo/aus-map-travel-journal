@@ -395,13 +395,13 @@ const MapView: React.FC<{
             }
           />
           {!loading &&
-            statsPins.map((pin) => {
+            statsPins.map((pin: BlogMapPin) => {
               // Set marker color to light blue if pin.type === 'stopover', else normal blue
               const markerIcon =
-                pin.type === "stopover"
+                pin.type !== "stopover"
                   ? L.icon({
                       iconUrl:
-                        "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-lightblue.png",
+                        "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
                       iconSize: [25, 41],
                       iconAnchor: [12, 41],
                       popupAnchor: [1, -34],
@@ -411,7 +411,7 @@ const MapView: React.FC<{
                     })
                   : L.icon({
                       iconUrl:
-                        "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
+                        "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-lightblue.png",
                       iconSize: [25, 41],
                       iconAnchor: [12, 41],
                       popupAnchor: [1, -34],
@@ -428,7 +428,6 @@ const MapView: React.FC<{
                   <Popup>
                     <BlogPinPopup
                       pin={pin}
-                      user={user}
                       onEdit={() => {
                         setEditingPin(pin);
                         setEditTitle(pin.title);
