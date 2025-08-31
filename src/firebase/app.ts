@@ -21,6 +21,7 @@ export const getApp = () => {
       !firebaseConfig.messagingSenderId ||
       !firebaseConfig.appId
     ) {
+      Logger.error("Firebase app  not initialized", { firebaseConfig });
       throw new Error(
         "Missing Firebase configuration. Please check your environment variables.",
       );
