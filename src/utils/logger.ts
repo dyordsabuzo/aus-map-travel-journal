@@ -2,7 +2,7 @@ import { createConsola } from "consola";
 
 // Create logger instance with configuration
 export const logger = createConsola({
-  level: import.meta.env.DEV ? 4 : 2, // 4=debug in dev, 2=info in prod
+  level: import.meta.env.DEV ? 4 : 4, // 4=debug in dev, 2=info in prod
   formatOptions: {
     date: true,
     colors: true,
@@ -17,7 +17,7 @@ export class Logger {
   static async withTryCatch<T>(
     operation: () => Promise<T>,
     context: string,
-    meta?: Record<string, any>
+    meta?: Record<string, any>,
   ): Promise<T> {
     try {
       logger.start(`Starting ${context}`, meta);
@@ -44,7 +44,7 @@ export class Logger {
   static withTryCatchSync<T>(
     operation: () => T,
     context: string,
-    meta?: Record<string, any>
+    meta?: Record<string, any>,
   ): T {
     try {
       logger.start(`Starting ${context}`, meta);
