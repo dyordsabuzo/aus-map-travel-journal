@@ -12,6 +12,7 @@ import "leaflet/dist/leaflet.css";
 import BlogPinPopup from "./BlogPinPopup";
 import AddPinButton from "./AddPinButton";
 import AddPinInput from "./AddPinInput";
+import AddPinByCoordsInput from "./AddPinByCoordsInput";
 import TravelStatsBox from "./TravelStatsBox/TravelStatsBox";
 import UserProfileBox from "../auth/UserProfileBox";
 import { useAuth } from "../auth/AuthContext";
@@ -90,6 +91,9 @@ const MapView: React.FC<{
   const [manualPinMode, setManualPinMode] = useState(false);
   // Removed manualPinCoords as it's unused
 
+  // State for Add Pin by Coordinates modal
+  const [showAddPinByCoords, setShowAddPinByCoords] = useState(false);
+
   // Add missing user and showAllPins state
   const { user } = useAuth();
   const [showAllPins, setShowAllPins] = useState<boolean>(false);
@@ -146,10 +150,14 @@ const MapView: React.FC<{
 
   // Compute travel stats from pins
   // Filter pins for user-specific stats
-  const userPins = user
-    ? pins.filter((p: BlogMapPin) => (p as any).userId === user.uid)
+  // Ensure pins is always BlogMapPin[]
+  const pinsArray: BlogMapPin[] = Array.isArray(pins)
+    ? (pins as BlogMapPin[])
     : [];
-  const statsPins = showAllPins ? pins : userPins;
+  const userPins = user
+    ? pinsArray.filter((p: BlogMapPin) => p.userId === user.uid)
+    : [];
+  const statsPins = showAllPins ? pinsArray : userPins;
 
   const mileageKm = calculateMileage(statsPins);
   const townsVisited = getUniqueTowns(statsPins).length;
@@ -256,7 +264,7 @@ const MapView: React.FC<{
             </span>
           </div>
         )}
-        {/* Only show AddPinButton and AddPinInput if user is logged in */}
+        {/* Only show AddPinButton, AddPinInput, and AddPinByCoordsInput if user is logged in */}
         {user && (
           <>
             <AddPinButton onClick={handleAddPinClick} />
@@ -266,6 +274,42 @@ const MapView: React.FC<{
               onAddressChange={handleAddressChange}
               onSubmit={handleAddressSubmit}
               onClose={handleInputClose}
+            />
+            {/* Add Pin by Coordinates Button */}
+            <button
+              className="fixed top-32 right-8 z-[1000] bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg hover:bg-blue-700 transition-all text-sm flex items-center"
+              style={{ minWidth: "70px" }}
+              onClick={() => setShowAddPinByCoords(true)}
+              aria-label="Add pin by coordinates"
+            >
+              Add Pin by Coordinates
+            </button>
+            <AddPinByCoordsInput
+              visible={showAddPinByCoords}
+              onClose={() => setShowAddPinByCoords(false)}
+              onSubmit={async ({ lat, lng, title, description }) => {
+                const newPin: BlogMapPin = {
+                  id: "",
+                  lat,
+                  lng,
+                  title,
+                  blogUrl: "#",
+                  featuredPhoto: "",
+                  date: new Date().toISOString(),
+                  description,
+                  tags: [],
+                  category: "",
+                  featured: false,
+                  userId: user.uid,
+                };
+                await addPin(newPin);
+                setShowAddPinByCoords(false);
+                showAlert({
+                  message: `Pin added at (${lat}, ${lng})!`,
+                  type: "success",
+                  duration: 4000,
+                });
+              }}
             />
             {/* Floating Save Current Location Button */}
             <button
@@ -303,7 +347,7 @@ const MapView: React.FC<{
                       setSavingLocation(false);
                       showAlert({
                         message:
-                          "Unable to get current location. You can manually enter an address, or click on the map to set your location.",
+                          "Unable to get current location. You can manually enter an address, coordinates, or click on the map to set your location.",
                         type: "warning",
                         duration: 6000,
                       });
@@ -316,7 +360,7 @@ const MapView: React.FC<{
                   setSavingLocation(false);
                   showAlert({
                     message:
-                      "Geolocation is not supported by your browser. You can manually enter an address, or click on the map to set your location.",
+                      "Geolocation is not supported by your browser. You can manually enter an address, coordinates, or click on the map to set your location.",
                     type: "error",
                     duration: 6000,
                   });

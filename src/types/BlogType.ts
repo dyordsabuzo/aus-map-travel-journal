@@ -218,6 +218,7 @@ export interface BlogMapPin {
   featured?: boolean;
   featuredPhoto?: string;
   userId?: string;
+  type?: string; // Added to support marker color logic
 }
 
 /**
