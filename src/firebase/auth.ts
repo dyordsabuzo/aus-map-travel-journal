@@ -9,9 +9,9 @@ import {
   onAuthStateChanged,
   User,
 } from "firebase/auth";
-import { app } from "./app";
+import { getApp } from "./app";
 
-const auth = getAuth(app);
+const auth = getAuth(getApp());
 
 export function signInWithGoogle() {
   const provider = new GoogleAuthProvider();

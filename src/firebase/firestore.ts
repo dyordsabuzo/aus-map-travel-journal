@@ -34,9 +34,9 @@ import {
 } from "firebase/firestore";
 import { BlogMapPin } from "../types/BlogType";
 import { auth } from "./auth";
-import { app } from "./app";
+import { getApp } from "./app";
 
-const db = getFirestore(app);
+const db = getFirestore(getApp());
 
 const PINS_COLLECTION = "pins";
 
