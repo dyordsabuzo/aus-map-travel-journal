@@ -205,6 +205,8 @@ export interface BlogFeed {
 /**
  * Map pin data derived from blog posts
  */
+export type PinType = "stopover" | "destination";
+
 export interface BlogMapPin {
   id: string;
   title: string;
@@ -218,7 +220,7 @@ export interface BlogMapPin {
   featured?: boolean;
   featuredPhoto?: string;
   userId?: string;
-  type?: string; // Added to support marker color logic
+  type?: PinType;
 }
 
 /**

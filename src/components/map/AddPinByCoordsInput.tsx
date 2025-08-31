@@ -8,6 +8,7 @@ export interface AddPinByCoordsInputProps {
     lng: number;
     title: string;
     description: string;
+    type: "stopover" | "destination";
   }) => void;
 }
 
@@ -24,6 +25,7 @@ const AddPinByCoordsInput: React.FC<AddPinByCoordsInputProps> = ({
   const [title, setTitle] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [error, setError] = useState<string>("");
+  const [type, setType] = useState<"stopover" | "destination">("destination");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,11 +53,13 @@ const AddPinByCoordsInput: React.FC<AddPinByCoordsInputProps> = ({
       lng: lngNum,
       title: title.trim(),
       description: description.trim(),
+      type,
     });
     setLat("");
     setLng("");
     setTitle("");
     setDescription("");
+    setType("destination");
   };
 
   if (!visible) return null;
@@ -94,6 +98,18 @@ const AddPinByCoordsInput: React.FC<AddPinByCoordsInputProps> = ({
             placeholder="Pin title"
             required
           />
+          <label className="block mb-2 text-sm font-semibold">Type</label>
+          <select
+            value={type}
+            onChange={(e) =>
+              setType(e.target.value as "stopover" | "destination")
+            }
+            className="w-full border px-2 py-1 rounded mb-3"
+            required
+          >
+            <option value="destination">Destination</option>
+            <option value="stopover">Stopover</option>
+          </select>
           <label className="block mb-2 text-sm font-semibold">
             Description
           </label>
@@ -116,6 +132,7 @@ const AddPinByCoordsInput: React.FC<AddPinByCoordsInputProps> = ({
                 setTitle("");
                 setDescription("");
                 onClose();
+                setType("destination");
               }}
             >
               Cancel

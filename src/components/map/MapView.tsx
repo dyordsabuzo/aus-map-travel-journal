@@ -170,6 +170,9 @@ const MapView: React.FC<{
   const [editingPin, setEditingPin] = useState<BlogMapPin | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
+  const [editType, setEditType] = useState<"stopover" | "destination">(
+    "destination",
+  );
   const [deletingPin, setDeletingPin] = useState<BlogMapPin | null>(null);
 
   // Edit pin handler
@@ -178,6 +181,7 @@ const MapView: React.FC<{
       await updateFirestorePin(editingPin.id, {
         title: editTitle,
         description: editDescription,
+        type: editingPin.type || "destination",
       });
       showAlert({
         message: "Pin updated!",
@@ -287,7 +291,7 @@ const MapView: React.FC<{
             <AddPinByCoordsInput
               visible={showAddPinByCoords}
               onClose={() => setShowAddPinByCoords(false)}
-              onSubmit={async ({ lat, lng, title, description }) => {
+              onSubmit={async ({ lat, lng, title, description, type }) => {
                 const newPin: BlogMapPin = {
                   id: "",
                   lat,
@@ -301,6 +305,7 @@ const MapView: React.FC<{
                   category: "",
                   featured: false,
                   userId: user.uid,
+                  type,
                 };
                 await addPin(newPin);
                 setShowAddPinByCoords(false);
@@ -476,6 +481,7 @@ const MapView: React.FC<{
                         setEditingPin(pin);
                         setEditTitle(pin.title);
                         setEditDescription(pin.description || "");
+                        setEditType(pin.type || "destination");
                       }}
                       onDelete={() => setDeletingPin(pin)}
                     />
@@ -517,6 +523,22 @@ const MapView: React.FC<{
               onChange={(e) => setEditTitle(e.target.value)}
               className="w-full border px-2 py-1 rounded mb-3"
             />
+            <label className="block mb-2 text-sm font-semibold">Type</label>
+            <select
+              value={editingPin?.type || "destination"}
+              onChange={(e) => {
+                if (editingPin) {
+                  setEditingPin({
+                    ...editingPin,
+                    type: e.target.value as "stopover" | "destination",
+                  });
+                }
+              }}
+              className="w-full border px-2 py-1 rounded mb-3"
+            >
+              <option value="destination">Destination</option>
+              <option value="stopover">Stopover</option>
+            </select>
             <label className="block mb-2 text-sm font-semibold">
               Description
             </label>
