@@ -12,6 +12,20 @@ export const getApp = () => {
       appId: import.meta.env.VITE_FIREBASE_APP_ID,
     };
 
+    // Check if any required environment variable is missing
+    if (
+      !firebaseConfig.apiKey ||
+      !firebaseConfig.authDomain ||
+      !firebaseConfig.projectId ||
+      !firebaseConfig.storageBucket ||
+      !firebaseConfig.messagingSenderId ||
+      !firebaseConfig.appId
+    ) {
+      throw new Error(
+        "Missing Firebase configuration. Please check your environment variables.",
+      );
+    }
+
     return initializeApp(firebaseConfig);
   }, "initializing firebase app");
 };

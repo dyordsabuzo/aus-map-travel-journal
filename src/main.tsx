@@ -14,8 +14,7 @@ root.render(
   <React.StrictMode>
     <AlertProvider>
       <AlertModal />
-      <AlertModal />
       <App />
     </AlertProvider>
-  </React.StrictMode>
+  </React.StrictMode>,
 );

@@ -10,7 +10,7 @@ import {
   getUniqueTowns,
   getTownsPerState,
 } from "../map/TravelStatsBox/utils";
-import { BlogMapPin } from "@/types/BlogType";
+import { BlogMapPin } from "../../types/BlogType";
 
 const UserProfileBox: React.FC = () => {
   const { user } = useAuth();
@@ -28,11 +28,11 @@ const UserProfileBox: React.FC = () => {
   const statsRef = useRef<HTMLDivElement>(null);
 
   // Travel stats calculation
-  const mileageKm = calculateMileage(pins);
-  const townsVisited = getUniqueTowns(pins).length;
+  const mileageKm = calculateMileage(pins as BlogMapPin[]);
+  const townsVisited = getUniqueTowns(pins as BlogMapPin[]).length;
   const stateExtractor = (pin: BlogMapPin) =>
     pin.category || (pin.tags && pin.tags.length > 0 ? pin.tags[0] : undefined);
-  const townsPerState = getTownsPerState(pins, stateExtractor);
+  const townsPerState = getTownsPerState(pins as BlogMapPin[], stateExtractor);
 
   // Click outside handler for stats box
   useEffect(() => {
@@ -83,6 +83,7 @@ const UserProfileBox: React.FC = () => {
       });
       setEditing(false);
     } catch (err: any) {
+      console.error("Failed to update profile:", err);
       showAlert({
         message: "Failed to update profile.",
         type: "error",

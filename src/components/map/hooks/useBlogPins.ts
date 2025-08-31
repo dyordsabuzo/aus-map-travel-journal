@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { BlogMapPin } from "../../types/BlogType";
+import { BlogMapPin } from "../../../types/BlogType";
 import {
   getAllPins as getAllFirestorePins,
   addPin as addFirestorePin,
@@ -7,6 +7,7 @@ import {
   deletePin as deleteFirestorePin,
 } from "../../../firebase/firestore";
 import { getBlogMapPins } from "@utils/blogProcessor";
+import { Logger } from "@/utils/logger";
 
 /**
  * Custom hook for managing blog pins on the map using Firestore and blog data.
@@ -21,15 +22,20 @@ export function useBlogPins() {
   const { data: pins = [], isLoading: loading } = useQuery<BlogMapPin[]>({
     queryKey: ["pins", "all"],
     queryFn: async () => {
-      const [firestorePins, blogPins] = await Promise.all([
-        getAllFirestorePins(),
-        getBlogMapPins(),
-      ]);
-      const blogPinIds = new Set(blogPins.map((p) => p.id));
-      return [
-        ...blogPins,
-        ...firestorePins.filter((p) => !blogPinIds.has(p.id)),
-      ];
+      try {
+        const [firestorePins, blogPins] = await Promise.all([
+          getAllFirestorePins(),
+          getBlogMapPins(),
+        ]);
+        const blogPinIds = new Set(blogPins.map((p) => p.id));
+        return [
+          ...blogPins,
+          ...firestorePins.filter((p) => !blogPinIds.has(p.id)),
+        ];
+      } catch (error) {
+        Logger.error("Failed to fetch pins:", error);
+        return [];
+      }
     },
     cacheTime: 1000 * 60 * 10, // 10 minutes
     staleTime: 1000 * 60 * 5, // 5 minutes
