@@ -16,6 +16,7 @@ import {
   updatePin as updateFirestorePin,
   deletePin as deleteFirestorePin,
 } from "../../firebase/firestore";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   calculateMileage,
   getUniqueTowns,
@@ -83,7 +84,7 @@ const MapView: React.FC<{
     [-10, 154], // Northeast
   ],
 }) => {
-  const { pins, addPin, loading, resetPins } = useBlogPins();
+  const { pins, addPin, loading } = useBlogPins(); // Removed unused resetPins
   const { showAlert } = useAlert();
   const { user } = useAuth();
 
@@ -118,6 +119,9 @@ const MapView: React.FC<{
   const statsPins = showAllPins ? pinsArray : userPins;
   // Removed unused variables: mileageKm, townsVisited, townsPerState
 
+  // Query client (move up before usage)
+  const queryClient = useQueryClient();
+
   // Pin add/edit handlers
   const handleAddressChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => setAddressInput(e.target.value),
@@ -148,17 +152,25 @@ const MapView: React.FC<{
           userId: user?.uid,
           type: "destination",
         };
-        await addPin(newPin);
+        const generatedId = await addPin(newPin);
+        // Optimistically update cache
+        queryClient.setQueryData(
+          ["pins", "all"],
+          (oldPins: BlogMapPin[] = []) => [
+            ...oldPins,
+            { ...newPin, id: generatedId },
+          ],
+        );
         handleInputClose();
       } else {
         showAlert({
           message: "Address not found. Please try a different address.",
-          type: "warning" as any, // Fix: ensure type matches AlertType
+          type: "warning",
           duration: 5000,
-        });
+        } as any); // Fix: ensure type matches AlertType
       }
     },
-    [addressInput, addPin, handleInputClose, user, showAlert],
+    [addressInput, addPin, handleInputClose, user, showAlert, queryClient],
   );
 
   // --- Animate Travel Logic ---
@@ -270,12 +282,17 @@ const MapView: React.FC<{
       userId: user?.uid,
       type,
     };
-    await addPin(newPin);
+    const generatedId = await addPin(newPin);
+    // Optimistically update cache
+    queryClient.setQueryData(["pins", "all"], (oldPins: BlogMapPin[] = []) => [
+      ...oldPins,
+      { ...newPin, id: generatedId },
+    ]);
     showAlert({
       message: `Pin added at (${lat}, ${lng})!`,
-      type: "success" as any, // Fix: ensure type matches AlertType
+      type: "success",
       duration: 4000,
-    });
+    } as any); // Fix: ensure type matches AlertType
   };
 
   // Edit pin handler
@@ -293,14 +310,32 @@ const MapView: React.FC<{
         type: updated.type,
         distance: updated.distance,
         accommodationCost: updated.accommodationCost,
+        featuredPhoto: updated.featuredPhoto,
       });
+
+      // Optimistically update the pin in the cache for instant UI update
+      queryClient.setQueryData(["pins", "all"], (oldPins: BlogMapPin[] = []) =>
+        oldPins.map((pin) =>
+          pin.id === editingPin.id
+            ? {
+                ...pin,
+                title: updated.title,
+                description: updated.description,
+                type: updated.type,
+                distance: updated.distance,
+                accommodationCost: updated.accommodationCost,
+                featuredPhoto: updated.featuredPhoto,
+              }
+            : pin,
+        ),
+      );
+
       showAlert({
         message: "Pin updated!",
-        type: "success" as any, // Fix: ensure type matches AlertType
+        type: "success",
         duration: 3000,
-      });
+      } as any); // Fix: ensure type matches AlertType
       setEditingPin(null);
-      resetPins();
     }
   };
 
@@ -308,13 +343,16 @@ const MapView: React.FC<{
   const handleDeletePin = async () => {
     if (deletingPin) {
       await deleteFirestorePin(deletingPin.id);
+      // Optimistically update cache
+      queryClient.setQueryData(["pins", "all"], (oldPins: BlogMapPin[] = []) =>
+        oldPins.filter((pin) => pin.id !== deletingPin.id),
+      );
       showAlert({
         message: "Pin deleted!",
-        type: "info" as any, // Fix: ensure type matches AlertType
+        type: "info",
         duration: 3000,
-      });
+      } as any); // Fix: ensure type matches AlertType
       setDeletingPin(null);
-      resetPins();
     }
   };
 
@@ -330,9 +368,9 @@ const MapView: React.FC<{
           setShowAddPinInput(false);
           showAlert({
             message: "Location selected! Saving pin...",
-            type: "success" as any, // Fix: ensure type matches AlertType
+            type: "success",
             duration: 4000,
-          });
+          } as any); // Fix: ensure type matches AlertType
           handleAddPinByCoords({
             lat,
             lng,
@@ -391,7 +429,7 @@ const MapView: React.FC<{
         <UserProfileBox />
         {/* Toggle user pins/all pins */}
         {user && (
-          <div className="fixed bottom-44 left-8 z-[1000]">
+          <div className="fixed top-72 left-8 z-[1000]">
             <button
               className={`px-3 py-1 rounded shadow text-sm font-semibold ${
                 showAllPins

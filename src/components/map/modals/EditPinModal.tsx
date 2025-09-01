@@ -23,6 +23,7 @@ const EditPinModal: React.FC<EditPinModalProps> = ({
   const [type, setType] = useState<PinType>("destination");
   const [distance, setDistance] = useState<number>(0);
   const [accommodationCost, setAccommodationCost] = useState<number>(0);
+  const [featuredPhoto, setFeaturedPhoto] = useState<string>("");
 
   useEffect(() => {
     if (pin) {
@@ -33,6 +34,7 @@ const EditPinModal: React.FC<EditPinModalProps> = ({
       setAccommodationCost(
         typeof pin.accommodationCost === "number" ? pin.accommodationCost : 0,
       );
+      setFeaturedPhoto(pin.featuredPhoto || "");
     }
   }, [pin]);
 
@@ -91,6 +93,27 @@ const EditPinModal: React.FC<EditPinModalProps> = ({
           className="w-full border px-2 py-1 rounded mb-3"
           placeholder="Accommodation cost"
         />
+        <label className="block mb-2 text-sm font-semibold">Photo URL</label>
+        <input
+          type="text"
+          value={featuredPhoto}
+          onChange={(e) => setFeaturedPhoto(e.target.value)}
+          className="w-full border px-2 py-1 rounded mb-3"
+          placeholder="Paste image URL here"
+        />
+        {featuredPhoto && (
+          <div className="mb-3 flex justify-center">
+            <img
+              src={featuredPhoto}
+              alt="Pin preview"
+              style={{
+                maxWidth: "120px",
+                maxHeight: "120px",
+                borderRadius: "8px",
+              }}
+            />
+          </div>
+        )}
         <div className="flex gap-2 justify-end">
           <button className="px-3 py-1 bg-gray-300 rounded" onClick={onClose}>
             Cancel
@@ -98,7 +121,14 @@ const EditPinModal: React.FC<EditPinModalProps> = ({
           <button
             className="px-3 py-1 bg-blue-600 text-white rounded"
             onClick={() =>
-              onSave({ title, description, type, distance, accommodationCost })
+              onSave({
+                title,
+                description,
+                type,
+                distance,
+                accommodationCost,
+                featuredPhoto,
+              })
             }
           >
             Save

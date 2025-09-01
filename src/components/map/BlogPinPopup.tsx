@@ -12,7 +12,7 @@ const BlogPinPopup: React.FC<{
   const isUserPin = user && pin.userId === user.uid;
 
   return (
-    <div className="flex items-center gap-3 w-full">
+    <div className="flex items-center gap-2 w-full">
       <a
         href={pin.blogUrl}
         className="block"
@@ -26,12 +26,26 @@ const BlogPinPopup: React.FC<{
             alt={pin.title}
             className="shadow rounded-xl"
             style={{
-              width: 54,
+              width: "auto",
               height: 54,
               objectFit: "cover",
               boxSizing: "border-box",
               marginRight: 0,
               display: "inline-block",
+              background: "#f3f3f3",
+            }}
+            onError={(e) => {
+              // fallback to default icon if image fails to load
+              (e.target as HTMLImageElement).style.display = "none";
+              const fallback = document.createElement("div");
+              fallback.className =
+                "rounded-full border-4 border-gray-400 bg-gray-300 flex items-center justify-center";
+              fallback.style.width = "54px";
+              fallback.style.height = "54px";
+              fallback.style.marginRight = "0px";
+              fallback.style.display = "inline-block";
+              fallback.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="gray" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto"><circle cx="12" cy="12" r="10"/><line x1="8" y1="15" x2="16" y2="15"/><line x1="9" y1="9" x2="15" y2="9"/></svg>`;
+              (e.target as HTMLImageElement).parentNode?.appendChild(fallback);
             }}
           />
         ) : (
