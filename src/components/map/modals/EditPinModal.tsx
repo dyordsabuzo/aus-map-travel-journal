@@ -21,12 +21,18 @@ const EditPinModal: React.FC<EditPinModalProps> = ({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [type, setType] = useState<PinType>("destination");
+  const [distance, setDistance] = useState<number>(0);
+  const [accommodationCost, setAccommodationCost] = useState<number>(0);
 
   useEffect(() => {
     if (pin) {
       setTitle(pin.title);
       setDescription(pin.description || "");
       setType(pin.type || "destination");
+      setDistance(typeof pin.distance === "number" ? pin.distance : 0);
+      setAccommodationCost(
+        typeof pin.accommodationCost === "number" ? pin.accommodationCost : 0,
+      );
     }
   }, [pin]);
 
@@ -61,13 +67,39 @@ const EditPinModal: React.FC<EditPinModalProps> = ({
           className="w-full border px-2 py-1 rounded mb-3"
           rows={3}
         />
+        <label className="block mb-2 text-sm font-semibold">
+          Distance (km)
+        </label>
+        <input
+          type="number"
+          value={distance}
+          min={0}
+          step={0.1}
+          onChange={(e) => setDistance(Number(e.target.value))}
+          className="w-full border px-2 py-1 rounded mb-3"
+          placeholder="Distance traveled"
+        />
+        <label className="block mb-2 text-sm font-semibold">
+          Accommodation Cost ($)
+        </label>
+        <input
+          type="number"
+          value={accommodationCost}
+          min={0}
+          step={0.01}
+          onChange={(e) => setAccommodationCost(Number(e.target.value))}
+          className="w-full border px-2 py-1 rounded mb-3"
+          placeholder="Accommodation cost"
+        />
         <div className="flex gap-2 justify-end">
           <button className="px-3 py-1 bg-gray-300 rounded" onClick={onClose}>
             Cancel
           </button>
           <button
             className="px-3 py-1 bg-blue-600 text-white rounded"
-            onClick={() => onSave({ title, description, type })}
+            onClick={() =>
+              onSave({ title, description, type, distance, accommodationCost })
+            }
           >
             Save
           </button>

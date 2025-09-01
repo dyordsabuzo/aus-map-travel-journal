@@ -221,6 +221,8 @@ export interface BlogMapPin {
   featuredPhoto?: string;
   userId?: string;
   type?: PinType;
+  distance?: number;
+  accommodationCost?: number;
 }
 
 /**

@@ -75,10 +75,31 @@ const BlogPinPopup: React.FC<{
         {pin.type && (
           <div className="mb-2">
             <span className="inline-block px-2 py-1 rounded text-xs bg-blue-100 text-blue-700 mr-1">
-              Type: {pin.type === "destination" ? "Destination" : "Stopover"}
+              Type:{" "}
+              {pin.type === "destination"
+                ? "Destination"
+                : pin.type === "home"
+                  ? "Home"
+                  : pin.type === "fuel"
+                    ? "Fuel"
+                    : "Stopover"}
             </span>
           </div>
         )}
+        <div className="mb-2">
+          <span className="inline-block px-2 py-1 rounded text-xs bg-green-100 text-green-700 mr-1">
+            Distance traveled:{" "}
+            {typeof pin.distance === "number" ? pin.distance : 0} km
+          </span>
+        </div>
+        <div className="mb-2">
+          <span className="inline-block px-2 py-1 rounded text-xs bg-purple-100 text-purple-700 mr-1">
+            Accommodation cost: $
+            {typeof pin.accommodationCost === "number"
+              ? pin.accommodationCost
+              : 0}
+          </span>
+        </div>
         {/*{pin.tags && pin.tags.length > 0 && (
           <div className="mb-2">
             {pin.tags.map((tag) => (

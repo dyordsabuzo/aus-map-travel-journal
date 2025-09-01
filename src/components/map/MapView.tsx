@@ -29,6 +29,7 @@ import EditPinModal from "./modals/EditPinModal";
 import DeletePinModal from "./modals/DeletePinModal";
 import PinControls from "./PinControls";
 import PinsLayer from "./PinsLayer";
+import Campervan from "../icons/Campervan";
 
 // Define selected icon outside the component to avoid recreation
 const selectedIcon = L.icon({
@@ -86,6 +87,14 @@ const MapView: React.FC<{
   const { showAlert } = useAlert();
   const { user } = useAuth();
 
+  // Animation state
+  const [animating, setAnimating] = useState(false);
+  const [truckPosition, setTruckPosition] = useState<[number, number] | null>(
+    null,
+  );
+  const [animationRoute, setAnimationRoute] = useState<[number, number][]>([]);
+  const [animationStep, setAnimationStep] = useState(0);
+
   // Pin controls state
   const [showAddPinInput, setShowAddPinInput] = useState(false);
   const [addressInput, setAddressInput] = useState("");
@@ -107,11 +116,7 @@ const MapView: React.FC<{
     : [];
   const userPins = user ? pinsArray.filter((p) => p.userId === user.uid) : [];
   const statsPins = showAllPins ? pinsArray : userPins;
-  const mileageKm = calculateMileage(statsPins);
-  const townsVisited = getUniqueTowns(statsPins).length;
-  const stateExtractor = (pin: BlogMapPin) =>
-    pin.category || (pin.tags && pin.tags.length > 0 ? pin.tags[0] : undefined);
-  const townsPerState = getTownsPerState(statsPins, stateExtractor);
+  // Removed unused variables: mileageKm, townsVisited, townsPerState
 
   // Pin add/edit handlers
   const handleAddressChange = useCallback(
@@ -148,13 +153,95 @@ const MapView: React.FC<{
       } else {
         showAlert({
           message: "Address not found. Please try a different address.",
-          type: "warning",
+          type: "warning" as any, // Fix: ensure type matches AlertType
           duration: 5000,
         });
       }
     },
     [addressInput, addPin, handleInputClose, user, showAlert],
   );
+
+  // --- Animate Travel Logic ---
+  const homePin = pinsArray.find((p) => p.type === "home");
+  const destinationPins = pinsArray.filter((p) => p.type === "destination");
+
+  // Haversine formula for distance
+  function haversine(lat1: number, lng1: number, lat2: number, lng2: number) {
+    const toRad = (value: number) => (value * Math.PI) / 180;
+    const R = 6371;
+    const dLat = toRad(lat2 - lat1);
+    const dLng = toRad(lng2 - lng1);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(lat1)) *
+        Math.cos(toRad(lat2)) *
+        Math.sin(dLng / 2) *
+        Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  function getSortedDestinations(
+    home: BlogMapPin | undefined,
+    destinations: BlogMapPin[],
+  ) {
+    if (!home) return [];
+    return [...destinations].sort(
+      (a, b) =>
+        haversine(home.lat, home.lng, a.lat, a.lng) -
+        haversine(home.lat, home.lng, b.lat, b.lng),
+    );
+  }
+
+  // Animate truck from home to each destination
+  const animateTravel = () => {
+    if (!homePin || destinationPins.length === 0) return;
+    const sorted = getSortedDestinations(homePin, destinationPins);
+    // Fix: ensure route is [number, number][]
+    const route: [number, number][] = [
+      [homePin.lat, homePin.lng],
+      ...sorted.map((p) => [p.lat, p.lng] as [number, number]),
+    ];
+    setAnimationRoute(route);
+    setTruckPosition([homePin.lat, homePin.lng]);
+    setAnimationStep(0);
+    setAnimating(true);
+  };
+
+  // Animation effect
+  React.useEffect(() => {
+    if (!animating || animationRoute.length < 2) return;
+    let step = animationStep;
+    let route = animationRoute;
+    // Removed unused variable: truck
+
+    if (step >= route.length - 1) {
+      setAnimating(false);
+      setTruckPosition(null);
+      return;
+    }
+
+    const [startLat, startLng] = route[step];
+    const [endLat, endLng] = route[step + 1];
+    const steps = 50;
+    let currentStep = 0;
+
+    function animateStep() {
+      if (currentStep > steps) {
+        setAnimationStep((s) => s + 1);
+        setTruckPosition([endLat, endLng]);
+        return;
+      }
+      const lat = startLat + ((endLat - startLat) * currentStep) / steps;
+      const lng = startLng + ((endLng - startLng) * currentStep) / steps;
+      setTruckPosition([lat, lng]);
+      currentStep++;
+      setTimeout(animateStep, 100); // Slow down animation (was 40ms)
+    }
+
+    animateStep();
+    // eslint-disable-next-line
+  }, [animating, animationStep, animationRoute]);
   const handleAddPinByCoords = async ({
     lat,
     lng,
@@ -186,7 +273,7 @@ const MapView: React.FC<{
     await addPin(newPin);
     showAlert({
       message: `Pin added at (${lat}, ${lng})!`,
-      type: "success",
+      type: "success" as any, // Fix: ensure type matches AlertType
       duration: 4000,
     });
   };
@@ -196,16 +283,20 @@ const MapView: React.FC<{
     title: string;
     description: string;
     type: PinType;
+    distance: number;
+    accommodationCost: number;
   }) => {
     if (editingPin) {
       await updateFirestorePin(editingPin.id, {
         title: updated.title,
         description: updated.description,
         type: updated.type,
+        distance: updated.distance,
+        accommodationCost: updated.accommodationCost,
       });
       showAlert({
         message: "Pin updated!",
-        type: "success",
+        type: "success" as any, // Fix: ensure type matches AlertType
         duration: 3000,
       });
       setEditingPin(null);
@@ -219,7 +310,7 @@ const MapView: React.FC<{
       await deleteFirestorePin(deletingPin.id);
       showAlert({
         message: "Pin deleted!",
-        type: "info",
+        type: "info" as any, // Fix: ensure type matches AlertType
         duration: 3000,
       });
       setDeletingPin(null);
@@ -228,7 +319,8 @@ const MapView: React.FC<{
   };
 
   // Map click handler for manual pin placement
-  const MapClickHandler = useCallback(() => {
+  // Fix: Use a component for MapClickHandler instead of useCallback
+  function ManualMapClickHandler() {
     useMapEvents({
       click: (e) => {
         if (manualPinMode && user) {
@@ -238,7 +330,7 @@ const MapView: React.FC<{
           setShowAddPinInput(false);
           showAlert({
             message: "Location selected! Saving pin...",
-            type: "success",
+            type: "success" as any, // Fix: ensure type matches AlertType
             duration: 4000,
           });
           handleAddPinByCoords({
@@ -252,68 +344,9 @@ const MapView: React.FC<{
       },
     });
     return null;
-  }, [manualPinMode, user, showAlert]);
+  }
 
-  // Compute travel stats from pins
-  // Filter pins for user-specific stats
-  // Ensure pins is always BlogMapPin[]
-  // const pinsArray: BlogMapPin[] = Array.isArray(pins)
-  //   ? (pins as BlogMapPin[])
-  //   : [];
-  // const userPins = user
-  //   ? pinsArray.filter((p: BlogMapPin) => p.userId === user.uid)
-  //   : [];
-  // const statsPins = showAllPins ? pinsArray : userPins;
-
-  // const mileageKm = calculateMileage(statsPins);
-  // const townsVisited = getUniqueTowns(statsPins).length;
-  // Example state extractor: assumes state info is in pin.category or first tag
-  // const stateExtractor = (pin: BlogMapPin) =>
-  //   pin.category || (pin.tags && pin.tags.length > 0 ? pin.tags[0] : undefined);
-  // const townsPerState = getTownsPerState(statsPins, stateExtractor);
-
-  // Pin edit/delete modal state
-  // const [editingPin, setEditingPin] = useState<BlogMapPin | null>(null);
-  const [editTitle, setEditTitle] = useState("");
-  const [editDescription, setEditDescription] = useState("");
-  const [editType, setEditType] = useState<"stopover" | "destination">(
-    "destination",
-  );
-  // const [deletingPin, setDeletingPin] = useState<BlogMapPin | null>(null);
-
-  // Edit pin handler
-  // const handleEditPin = async () => {
-  //   if (editingPin) {
-  //     await updateFirestorePin(editingPin.id, {
-  //       title: editTitle,
-  //       description: editDescription,
-  //       type: editingPin.type || "destination",
-  //     });
-  //     showAlert({
-  //       message: "Pin updated!",
-  //       type: "success",
-  //       duration: 3000,
-  //     });
-  //     setEditingPin(null);
-  //     setEditTitle("");
-  //     setEditDescription("");
-  //     resetPins();
-  //   }
-  // };
-
-  // Delete pin handler
-  // const handleDeletePin = async () => {
-  //   if (deletingPin) {
-  //     await deleteFirestorePin(deletingPin.id);
-  //     showAlert({
-  //       message: "Pin deleted!",
-  //       type: "info",
-  //       duration: 3000,
-  //     });
-  //     setDeletingPin(null);
-  //     resetPins();
-  //   }
-  // };
+  // Removed unused state: editTitle, setEditTitle, editDescription, setEditDescription, editType, setEditType
 
   return (
     <div className="relative h-screen w-screen">
@@ -392,6 +425,17 @@ const MapView: React.FC<{
           setShowLocationHelp={setShowLocationHelp}
           setManualPinMode={setManualPinMode}
         />
+        {/* Animate Travel Button */}
+        {homePin && destinationPins.length > 0 && (
+          <button
+            className="fixed top-56 left-8 z-[1000] bg-orange-600 text-white px-4 py-2 rounded-full shadow-lg hover:bg-orange-700 transition-all text-sm flex items-center"
+            style={{ minWidth: "70px" }}
+            onClick={animateTravel}
+            disabled={animating}
+          >
+            {animating ? "Animating..." : "Animate Travel"}
+          </button>
+        )}
 
         <MapContainer
           center={initialCenter}
@@ -406,13 +450,48 @@ const MapView: React.FC<{
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           />
-          <MapClickHandler />
+          <ManualMapClickHandler />
           <PinsLayer
             pins={statsPins}
             loading={loading}
             onEditPin={(pin) => setEditingPin(pin)}
             onDeletePin={(pin) => setDeletingPin(pin)}
           />
+          {/* Optionally, draw polyline for route */}
+          {animating && animationRoute.length > 1 && (
+            <Polyline
+              positions={animationRoute}
+              color="orange"
+              weight={4}
+              opacity={0.7}
+              // zIndex={200} // Fix: Remove unsupported prop
+            />
+          )}
+          {/* Truck Animation Marker - render after polyline for visibility */}
+          {animating && truckPosition && (
+            <Marker
+              position={truckPosition}
+              icon={L.divIcon({
+                html: `<span id="truck-icon-marker"></span>`,
+                iconSize: [48, 48],
+                iconAnchor: [24, 24], // Center the icon
+                className: "",
+              })}
+              zIndexOffset={1000}
+              eventHandlers={{
+                add: () => {
+                  const el = document.querySelector("#truck-icon-marker");
+                  if (el) {
+                    // Use React 18+ createRoot API instead of deprecated render
+                    import("react-dom/client").then((ReactDOMClient) => {
+                      const root = ReactDOMClient.createRoot(el);
+                      root.render(<Campervan size="48" />);
+                    });
+                  }
+                },
+              }}
+            />
+          )}
         </MapContainer>
         {/* Help tooltip for manual location */}
         {showLocationHelp && (
