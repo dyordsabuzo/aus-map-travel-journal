@@ -175,7 +175,10 @@ const MapView: React.FC<{
 
   // --- Animate Travel Logic ---
   const homePin = pinsArray.find((p) => p.type === "home");
-  const destinationPins = pinsArray.filter((p) => p.type === "destination");
+  // const destinationPins = pinsArray.filter((p) => p.type === "destination");
+  const destinationPins = pinsArray.filter(
+    (p) => p.type !== "home" && p.userId,
+  );
 
   // Haversine formula for distance
   function haversine(lat1: number, lng1: number, lat2: number, lng2: number) {
@@ -254,6 +257,7 @@ const MapView: React.FC<{
     animateStep();
     // eslint-disable-next-line
   }, [animating, animationStep, animationRoute]);
+
   const handleAddPinByCoords = async ({
     lat,
     lng,

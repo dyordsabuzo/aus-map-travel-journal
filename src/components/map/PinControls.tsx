@@ -59,7 +59,7 @@ const PinControls: React.FC<PinControlsProps> = ({
   }
 
   return (
-    <>
+    <div className="fixed top-14 right-2 z-[1000] flex flex-col gap-1">
       <AddPinButton onClick={() => setShowAddPinInput(!showAddPinInput)} />
       <AddPinInput
         visible={showAddPinInput}
@@ -70,7 +70,7 @@ const PinControls: React.FC<PinControlsProps> = ({
       />
       {/* Add Pin by Coordinates Button */}
       <button
-        className="fixed top-32 right-8 z-[1000] bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg hover:bg-blue-700 transition-all text-sm flex items-center"
+        className="bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg hover:bg-blue-700 transition-all text-sm flex items-center"
         style={{ minWidth: "70px" }}
         onClick={() => setShowAddPinByCoords(true)}
         aria-label="Add pin by coordinates"
@@ -87,7 +87,7 @@ const PinControls: React.FC<PinControlsProps> = ({
       />
       {/* Floating Save Current Location Button */}
       <button
-        className="fixed top-24 right-8 z-[1000] bg-green-600 text-white px-4 py-2 rounded-full shadow-lg hover:bg-green-700 transition-all text-sm flex items-center"
+        className="z-[1000] bg-green-600 text-white px-4 py-2 rounded-full shadow-lg hover:bg-green-700 transition-all text-sm flex items-center"
         style={{ minWidth: "70px" }}
         onClick={async () => {
           setSavingLocation(true);
@@ -140,7 +140,7 @@ const PinControls: React.FC<PinControlsProps> = ({
       >
         {savingLocation ? "Saving..." : "Save Current Location"}
       </button>
-    </>
+    </div>
   );
 };
 
