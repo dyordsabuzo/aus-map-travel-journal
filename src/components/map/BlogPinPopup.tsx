@@ -12,7 +12,7 @@ const BlogPinPopup: React.FC<{
   const isUserPin = user && pin.userId === user.uid;
 
   return (
-    <div className="flex items-center gap-3 p-2">
+    <div className="flex items-center gap-3 w-full">
       <a
         href={pin.blogUrl}
         className="block"
