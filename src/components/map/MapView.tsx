@@ -358,7 +358,7 @@ const MapView: React.FC<{
         <UserProfileBox />
         {/* Toggle user pins/all pins */}
         {user && (
-          <div className="fixed top-44 left-8 z-[1000]">
+          <div className="fixed bottom-44 left-8 z-[1000]">
             <button
               className={`px-3 py-1 rounded shadow text-sm font-semibold ${
                 showAllPins
