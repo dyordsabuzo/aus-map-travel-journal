@@ -387,16 +387,7 @@ const MapView: React.FC<{
             Please log in to add pins.
           </div>
         )}
-        {/* Floating TravelStatsBox under zoom controls */}
-        <TravelStatsBox
-          stats={{
-            mileageKm,
-            townsVisited,
-            townsPerState,
-          }}
-          className=""
-          style={{ top: 80, left: 16 }} // adjust as needed for zoom control position
-        />
+
         <MapContainer
           center={initialCenter}
           zoom={initialZoom}

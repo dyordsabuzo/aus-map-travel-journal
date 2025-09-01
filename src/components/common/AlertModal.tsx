@@ -107,10 +107,10 @@ export const AlertModal: React.FC = () => {
                           type === "error"
                             ? "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500"
                             : type === "warning"
-                            ? "bg-yellow-600 text-white hover:bg-yellow-700 focus:ring-yellow-500"
-                            : type === "success"
-                            ? "bg-green-600 text-white hover:bg-green-700 focus:ring-green-500"
-                            : "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500"
+                              ? "bg-yellow-600 text-white hover:bg-yellow-700 focus:ring-yellow-500"
+                              : type === "success"
+                                ? "bg-green-600 text-white hover:bg-green-700 focus:ring-green-500"
+                                : "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500"
                         }
                         focus:outline-none focus:ring-2 focus:ring-offset-2`}
           >

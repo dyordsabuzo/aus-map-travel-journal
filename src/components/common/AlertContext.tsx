@@ -33,7 +33,7 @@ export const AlertProvider: React.FC<{ children: ReactNode }> = ({
     ({ message, type = "info", title, duration, onClose }: AlertOptions) => {
       setAlert({ message, type, isVisible: true, title, duration, onClose });
     },
-    []
+    [],
   );
 
   // Function to hide the alert
