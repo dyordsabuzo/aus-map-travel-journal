@@ -51,6 +51,8 @@ const EditPinModal: React.FC<EditPinModalProps> = ({
         >
           <option value="destination">Destination</option>
           <option value="stopover">Stopover</option>
+          <option value="home">Home</option>
+          <option value="fuel">Fuel</option>
         </select>
         <label className="block mb-2 text-sm font-semibold">Description</label>
         <textarea

@@ -4,6 +4,8 @@ import L from "leaflet";
 import BlogPinPopup from "./BlogPinPopup";
 import { BlogMapPin } from "../../types/BlogType";
 import RestIcon from "../../svg/Rest.svg";
+import HomeIcon from "../icons/HomeIcon";
+import GasStation from "../icons/GasStation";
 
 interface PinsLayerProps {
   pins: BlogMapPin[];
@@ -36,28 +38,100 @@ const PinsLayer: React.FC<PinsLayerProps> = ({
 
   return (
     <>
-      {pins.map((pin) =>
-        pin.type === "stopover" ? (
-          <Marker
-            key={pin.id}
-            position={[pin.lat, pin.lng]}
-            icon={L.divIcon({
-              html: `<img src="${RestIcon}" style="width:30px;height:30px;" alt="Rest" />`,
-              iconSize: [30, 30],
-              className: "",
-            })}
-          >
-            <Popup className="my-custom-popup" maxWidth={350}>
-              <div className="popup-inner bg-white rounded-xl shadow-lg border border-blue-300">
+      {pins.map((pin) => {
+        if (pin.type === "stopover") {
+          return (
+            <Marker
+              key={pin.id}
+              position={[pin.lat, pin.lng]}
+              icon={L.divIcon({
+                html: `<img src="${RestIcon}" style="width:30px;height:30px;" alt="Rest" />`,
+                iconSize: [30, 30],
+                className: "",
+              })}
+            >
+              <Popup className="my-custom-popup" maxWidth={350}>
+                <div className="popup-inner bg-white rounded-xl shadow-lg p-4 border border-blue-300">
+                  <BlogPinPopup
+                    pin={pin}
+                    onEdit={() => onEditPin(pin)}
+                    onDelete={() => onDeletePin(pin)}
+                  />
+                </div>
+              </Popup>
+            </Marker>
+          );
+        }
+        if (pin.type === "home") {
+          return (
+            <Marker
+              key={pin.id}
+              position={[pin.lat, pin.lng]}
+              icon={L.divIcon({
+                html: `<span style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;"><span id="home-icon-marker"></span></span>`,
+                iconSize: [32, 32],
+                className: "",
+              })}
+              eventHandlers={{
+                add: () => {
+                  // Render the HomeIcon into the marker's div after it's added to the DOM
+                  const el = document.querySelector("#home-icon-marker");
+                  if (el) {
+                    // Use React 18+ createRoot API instead of deprecated render
+                    import("react-dom/client").then((ReactDOMClient) => {
+                      const root = ReactDOMClient.createRoot(el);
+                      root.render(<HomeIcon size="32" />);
+                    });
+                  }
+                },
+              }}
+            >
+              <Popup>
                 <BlogPinPopup
                   pin={pin}
                   onEdit={() => onEditPin(pin)}
                   onDelete={() => onDeletePin(pin)}
                 />
-              </div>
-            </Popup>
-          </Marker>
-        ) : (
+              </Popup>
+            </Marker>
+          );
+        }
+        if (pin.type === "fuel") {
+          return (
+            <Marker
+              key={pin.id}
+              position={[pin.lat, pin.lng]}
+              icon={L.divIcon({
+                html: `<span style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;"><span id="fuel-icon-marker-${pin.id}"></span></span>`,
+                iconSize: [32, 32],
+                className: "",
+              })}
+              eventHandlers={{
+                add: () => {
+                  const el = document.querySelector(
+                    `#fuel-icon-marker-${pin.id}`,
+                  );
+                  if (el) {
+                    // Use React 18+ createRoot API instead of deprecated render
+                    import("react-dom/client").then((ReactDOMClient) => {
+                      const root = ReactDOMClient.createRoot(el);
+                      root.render(<GasStation size="32" />);
+                    });
+                  }
+                },
+              }}
+            >
+              <Popup>
+                <BlogPinPopup
+                  pin={pin}
+                  onEdit={() => onEditPin(pin)}
+                  onDelete={() => onDeletePin(pin)}
+                />
+              </Popup>
+            </Marker>
+          );
+        }
+        return (
           <Marker
             key={pin.id}
             position={[pin.lat, pin.lng]}
@@ -71,8 +145,8 @@ const PinsLayer: React.FC<PinsLayerProps> = ({
               />
             </Popup>
           </Marker>
-        ),
-      )}
+        );
+      })}
     </>
   );
 };

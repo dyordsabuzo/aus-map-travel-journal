@@ -205,7 +205,7 @@ export interface BlogFeed {
 /**
  * Map pin data derived from blog posts
  */
-export type PinType = "stopover" | "destination";
+export type PinType = "stopover" | "destination" | "home" | "fuel";
 
 export interface BlogMapPin {
   id: string;
