@@ -103,7 +103,12 @@ const AddPinByCoordsInput: React.FC<AddPinByCoordsInputProps> = ({
             value={type}
             onChange={(e) =>
               setType(
-                e.target.value as "stopover" | "destination" | "home" | "fuel",
+                e.target.value as
+                  | "stopover"
+                  | "destination"
+                  | "home"
+                  | "fuel"
+                  | "sight-see",
               )
             }
             className="w-full border px-2 py-1 rounded mb-3"
@@ -113,6 +118,7 @@ const AddPinByCoordsInput: React.FC<AddPinByCoordsInputProps> = ({
             <option value="stopover">Stopover</option>
             <option value="home">Home</option>
             <option value="fuel">Fuel</option>
+            <option value="sight-see">Sight-see</option>
           </select>
           <label className="block mb-2 text-sm font-semibold">
             Description
